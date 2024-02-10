@@ -3,6 +3,7 @@ from pygame.locals import *
 import pymunk
 import pymunk.pygame_util
 import numpy as np
+import random
 
 # --- Initialise PyGame (Rendering Engine) ---
 
@@ -34,7 +35,7 @@ def scale_positions_to_screen_size(position):
   return position_x * screen_width, position_y * screen_height
 
 
-def add_ball(physics_space, position) -> pymunk.Circle:
+def add_physics_ball(physics_space, position):
 
   inertia = pymunk.moment_for_circle(BALL_MASS, 0, BALL_RADIUS, (0, 0))
 
@@ -47,10 +48,10 @@ def add_ball(physics_space, position) -> pymunk.Circle:
 
   physics_space.add(body, shape)
 
-  return shape
+  return shape, body
 
 
-def add_line(physics_space, start_position, end_position) -> pymunk.Segment:
+def add_physics_line(physics_space, start_position, end_position):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
 
   shape = pymunk.Segment(body, scale_positions_to_screen_size(start_position), scale_positions_to_screen_size(end_position), radius=1)
@@ -60,12 +61,36 @@ def add_line(physics_space, start_position, end_position) -> pymunk.Segment:
 
   physics_space.add(body, shape)
 
-  return shape
+  return shape, body
 
 
-def add_lines_from_position_list(positions):
-  for start_position, end_position in positions:
-    add_line(physics_space, start_position, end_position)
+def add_physics_lines_from_position_list(positions):
+  return [add_physics_line(physics_space, start_position, end_position) for start_position, end_position in positions]
+
+
+# --- Draw Objects ---
+
+def draw_physics_ball(ball):
+  ball_shape, ball_body = ball
+
+  radius = ball_shape.radius
+  position = ball_body.position
+
+  pygame.draw.circle(render_screen, "blue", position, radius)
+
+
+def draw_physics_line(line):
+  line_shape, _ = line
+
+  start_position_x = line_shape.a.x
+  start_position_y = line_shape.a.y
+  start_position = (start_position_x, start_position_y)
+
+  end_position_x = line_shape.b.x
+  end_position_y = line_shape.b.y
+  end_position = (end_position_x, end_position_y)
+
+  pygame.draw.line(render_screen, "black", start_position, end_position)
 
 
 def start_game(get_pose_results_callback):
@@ -73,26 +98,53 @@ def start_game(get_pose_results_callback):
   is_main_game_loop_running = True
 
   # Lists must be kept alive for balls to render
-  balls = [add_ball(physics_space, (0.11, 0.05))]
-  lines = [add_lines_from_position_list([
-      ((0.1, 0.1), (0.2, 0.2)),
-      ((0.25, 0.25), (0.35, 0.35)),
-      ((0.4, 0.4), (0.5, 0.5)),
-      ((0.55, 0.55), (0.65, 0.65)),
-  ])]
+  balls = [add_physics_ball(physics_space, (0.11, 0.05))]
 
-  draw_options = pymunk.pygame_util.DrawOptions(render_screen)
+  level_lines = add_physics_lines_from_position_list([
+      ((0.1, 0.1), (0.2, 0.15)),
+      # ((0.25, 0.25), (0.35, 0.35)),
+      # ((0.4, 0.4), (0.5, 0.5)),
+      # ((0.55, 0.55), (0.65, 0.65)),
+      ((0.8, 0.8), (0.85, 0.85)),
+  ])
+
+  flag = add_physics_flag(physics_space, (0.825, 0.825))
+
+  game_lines_3 = []
+  game_lines_2 = []
+  game_lines_1 = []
+  game_lines_0 = []
 
   while is_main_game_loop_running:
+
+    for line in game_lines_0:
+      line_shape, line_body = line
+      physics_space.remove(line_shape, line_body)
+
+    game_lines_0 = game_lines_1
+    game_lines_1 = game_lines_2
+    game_lines_2 = game_lines_3
+    game_lines_3 = []
+
+    if random.random() < 0.01:
+      balls.append(add_physics_ball(physics_space, (0.11, 0.05)))
+
+    balls_to_remove = []
+
+    for ball in balls:
+      _, ball_body = ball
+      if ball_body.position.y > screen_height * 1.1:
+        balls_to_remove.append(ball)
+
+    for ball in balls_to_remove:
+      balls.remove(ball)
+      physics_space.remove(*ball)
 
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         is_main_game_loop_running = False
       elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         is_main_game_loop_running = False
-
-    render_screen.fill(color=(255, 255, 255))
-    physics_space.debug_draw(draw_options)
 
     previous_pose_results, previous_lines_results = get_pose_results_callback()
 
@@ -109,7 +161,30 @@ def start_game(get_pose_results_callback):
 
       render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
 
+    else:
+      print("Waiting for pose estimation")
+
+    for line in previous_lines_results:
+      (start_position_x, start_position_y), (end_position_x, end_position_y) = line
+      
+      start_position = (1 - start_position_x, start_position_y)
+      end_position = (1 - end_position_x, end_position_y)
+
+      game_lines_3.append(add_physics_line(physics_space, start_position, end_position))
+
     pygame.display.flip()
+
+    render_screen.fill(color=(255, 255, 255))
+    # physics_space.debug_draw(draw_options)
+
+    for ball in balls:
+      draw_physics_ball(ball)
+
+    for line in level_lines:
+      draw_physics_line(line)
+
+    for line in game_lines_3:
+      draw_physics_line(line)
 
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
