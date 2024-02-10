@@ -62,7 +62,7 @@ def add_lines_from_position_list(positions):
     add_line(physics_space, start_position, end_position)
 
 
-def start_game(q):
+def start_game(get_webcam_pose_image_callback):
 
   is_main_game_loop_running = True
 
@@ -85,17 +85,19 @@ def start_game(q):
       elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         is_main_game_loop_running = False
 
-    if q:
-      img = np.array(q)
-      # for some reason the image is rotated 90 degrees
-      img = np.rot90(img)
-      surf = pygame.surfarray.make_surface(img)
-
-    render_screen.fill((255, 255, 255))
+    render_screen.fill(color=(255, 255, 255))
     physics_space.debug_draw(draw_options)
 
-    if q:
-      render_screen.blit(surf, (0, 0))
+    webcam_pose_image = get_webcam_pose_image_callback()
+
+    if not (webcam_pose_image is None):
+
+      webcam_pose_image = np.array(webcam_pose_image)
+      # for some reason the image is rotated 90 degrees
+      webcam_pose_image = np.rot90(webcam_pose_image)
+      webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
+
+      render_screen.blit(source=webcam_pose_image_surface, dest=(0, 0))
 
     pygame.display.flip()
 
