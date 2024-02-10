@@ -424,7 +424,7 @@ def start_game(get_pose_results_callback):
       if len(flag_shape.shapes_collide(ball_shape).points) > 0:
         print("Flag touched")
         current_level = next(levels)
-        balls, level_lines, flag, bg_images = change_level(current_level, balls, level_lines, flag)
+        balls, level_lines, flag, bg_images = change_level(current_level, physics_space, balls, level_lines, flag)
         break
 
     render_clock.tick(60)
