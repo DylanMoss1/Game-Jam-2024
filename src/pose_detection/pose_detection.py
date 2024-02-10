@@ -48,7 +48,7 @@ def detection_callback(result: mp.tasks.vision.PoseLandmarkerResult, output_imag
     for connection1, connection2 in connected_landmarks:
       landmark1 = landmark_list[connection1]
       landmark2 = landmark_list[connection2]
-      pose_line_list.append(((landmark1.x, landmark1.y), (landmark2.x, landmark2.y)))
+      pose_line_list.append(((connection1, connection2), (landmark1.x, landmark1.y), (landmark2.x, landmark2.y)))
 
     annotated_image = draw_landmarks_on_image(output_image.numpy_view(), result)
 
@@ -87,7 +87,8 @@ def start_pose_detection(set_pose_results_callback):
 
       mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
-      timestamp = int(round(time.time()*1000))
+      # timestamp = int(time.time() * 1000)
+      timestamp = int(cap.get(cv2.CAP_PROP_POS_MSEC))
 
       # Process the frame with MediaPipe Pose Landmark model.
       detector.detect_async(mp_image, timestamp)
