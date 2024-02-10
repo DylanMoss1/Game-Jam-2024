@@ -2,8 +2,8 @@ from typing import Tuple
 from overrides import override
 import pymunk
 import pygame
-from object_properties.renderable import Renderable
-from object_properties.physical import Physical
+from screen_render.object_properties.renderable import Renderable
+from screen_render.object_properties.physical import Physical
 
 
 class Line(Renderable, Physical):

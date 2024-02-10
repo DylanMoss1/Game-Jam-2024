@@ -1,21 +1,12 @@
-from objects.line import Line
-from object_collections.renderable_objects_collection import RenderableObjectsCollection
-from object_collections.physical_object_collection import PhysicalObjectsCollection
+from screen_render.objects.line import Line
+from screen_render.object_collections.renderable_objects_collection import RenderableObjectsCollection
+from screen_render.object_collections.physical_object_collection import PhysicalObjectsCollection
 import pygame
 from pygame.locals import *
 import pymunk
 import pymunk.pygame_util
-
-# --- Initialise PyGame ---
-
-pygame.init()
-render_clock = pygame.time.Clock()
-
-render_screen = pygame.display.set_mode((400, 300), RESIZABLE)
-
-is_main_game_loop_running = True
-
-render_font = pygame.font.SysFont(None, 48)
+import numpy as np
+import cv2
 
 # --- Initialise PyMunk ---
 
@@ -30,7 +21,6 @@ physics_engine.gravity = (physics_gravity_scale, physics_wind_scale)
 all_renderable_objects = RenderableObjectsCollection()
 all_physical_objects = PhysicalObjectsCollection()
 
-
 def setup_object(object, is_renderable, is_physical):
   if is_renderable:
     all_renderable_objects.add(object)
@@ -40,32 +30,52 @@ def setup_object(object, is_renderable, is_physical):
     all_physical_objects.add(object)
 
 
-line = Line(start_position=(0.1, 0.9), end_position=(0.9, 0.9))
-setup_object(line, is_renderable=True, is_physical=True)
+def start_game(q):
+  # --- Initialise PyGame ---
+  pygame.init()
+  render_clock = pygame.time.Clock()
 
-# --- Main Gameplay Loop ---
+  render_screen = pygame.display.set_mode((400, 300), RESIZABLE)
 
-while is_main_game_loop_running:
+  is_main_game_loop_running = True
 
-  current_screen_width = render_screen.get_width()
-  current_screen_height = render_screen.get_height()
+  render_font = pygame.font.SysFont(None, 48)
 
-  render_clock.tick(60)
-  for pygame_user_input_event in pygame.event.get():
-    if pygame_user_input_event.type == pygame.QUIT:
-      is_main_game_loop_running = False
-    elif pygame_user_input_event.type == VIDEORESIZE:
-      all_physical_objects.setup_physics_on_all(physics_engine)
 
-  render_screen.fill((200, 200, 200))
 
-  all_renderable_objects.render_all(render_screen, current_screen_width, current_screen_height)
+  line = Line(start_position=(0.1, 0.9), end_position=(0.9, 0.9))
+  setup_object(line, is_renderable=True, is_physical=True)
 
-  physics_engine.step(1/60.0)
-  pygame.display.update()
+  # --- Main Gameplay Loop ---
 
-pygame.quit()
+  while is_main_game_loop_running:
+    img = np.array(q.get())
+    # for some reason the image is rotated 90 degrees
+    img = np.rot90(img)
 
+    surf = pygame.surfarray.make_surface(img)
+    current_screen_width = render_screen.get_width()
+    current_screen_height = render_screen.get_height()
+
+    render_clock.tick(60)
+    for pygame_user_input_event in pygame.event.get():
+      if pygame_user_input_event.type == pygame.QUIT:
+        is_main_game_loop_running = False
+      elif pygame_user_input_event.type == VIDEORESIZE:
+        all_physical_objects.setup_physics_on_all(physics_engine)
+
+    render_screen.fill((200, 200, 200))
+
+    all_renderable_objects.render_all(render_screen, current_screen_width, current_screen_height)
+
+    render_screen.blit(surf, (0, 0))
+    physics_engine.step(1/60.0)
+    pygame.display.update()
+
+  pygame.quit()
+
+if __name__ == "__main__":
+  start_game()
 
 # rad = 14
 # ball_elasticity = 0.8
