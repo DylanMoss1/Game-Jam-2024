@@ -13,7 +13,7 @@ def callback(result: mp.tasks.vision.PoseLandmarkerResult, output_image: mp.Imag
     annotated_frame = posedetect.draw_landmarks_on_image(output_image.numpy_view(), result)
     # Convert the frame back to BGR before displaying it.
     bgr_annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
-    # q.put(bgr_annotated_frame)
+    q.put(bgr_annotated_frame)
     #print('pose landmarker result: {}'.format(result))
 
 def start_capture():
@@ -25,8 +25,8 @@ def start_capture():
       ret, frame = cap.read()
 
       # Display the frame
-      #cv2.imshow('Webcam Feed', frame)
-      q.put(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+      # cv2.imshow('Webcam Feed', frame)
+      # q.put(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
       mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
       timestamp = int(round(time.time()*1000))
