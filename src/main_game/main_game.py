@@ -5,6 +5,10 @@ import pymunk.pygame_util
 import numpy as np
 import random
 
+LEVEL_BACKGROUND_IMAGES = {
+    "level_1": [("shake_two_look_clean.jpg", (0.1, 0.1), (0.4, 0.4))]
+}
+
 LEVEL_LINE_POS = {
     "level_1": [
       ((0.1, 0.1), (0.2, 0.15)),
@@ -159,6 +163,23 @@ def draw_physics_flag(flag):
   pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT))
   return rect
 
+def load_and_scale_background_images(level):
+  images = []
+  for image_path, top_left, bottom_right in LEVEL_BACKGROUND_IMAGES[level]:
+    # Load the image
+    image = pygame.image.load(f"imgs/{image_path}")
+    # Scale the image
+    top_left_scaled = scale_positions_to_screen_size(top_left)
+    bottom_right_scaled = scale_positions_to_screen_size(bottom_right)
+    size_scaled = (bottom_right_scaled[0] - top_left_scaled[0], bottom_right_scaled[1] - top_left_scaled[1])
+    image = pygame.transform.scale(image, size_scaled)
+    images.append((image, top_left_scaled))
+  return images
+
+def draw_background_images(bg_images):
+  for image, position in bg_images:
+    render_screen.blit(image, position)
+
 def change_level(current_level, balls=None, level_lines=None, flag=None):
   if balls is not None:
     for ball in balls:
@@ -175,7 +196,9 @@ def change_level(current_level, balls=None, level_lines=None, flag=None):
 
   flag = add_physics_flag(physics_space, LEVEL_FLAG_POS[current_level])
 
-  return balls, level_lines, flag
+  bg_images = load_and_scale_background_images(current_level)
+
+  return balls, level_lines, flag, bg_images
 
 def start_game(get_pose_results_callback):
 
@@ -185,7 +208,7 @@ def start_game(get_pose_results_callback):
   is_main_game_loop_running = True
 
 
-  balls, level_lines, flag = change_level(current_level)
+  balls, level_lines, flag, bg_images = change_level(current_level)
 
   game_lines_3 = []
   game_lines_2 = []
@@ -252,6 +275,9 @@ def start_game(get_pose_results_callback):
     pygame.display.flip()
 
     render_screen.fill(color=(255, 255, 255))
+
+    draw_background_images(bg_images)
+
     # physics_space.debug_draw(draw_options)
 
     for ball in balls:
