@@ -16,11 +16,12 @@ def get_webcam_pose_image_callback():
 
 
 def main():
-  pose_detection_thread = threading.Thread(target=start_pose_detection, args=(set_webcam_pose_image_callback,))
+  pose_detection_thread = threading.Thread(daemon=True, target=start_pose_detection, args=(set_webcam_pose_image_callback,))
   pose_detection_thread.start()
 
-  game_thread = threading.Thread(target=start_game, args=(get_webcam_pose_image_callback,))
-  game_thread.start()
+  # game_thread = threading.Thread(target=start_game, args=(get_webcam_pose_image_callback,))
+  # game_thread.start()
+  start_game(get_webcam_pose_image_callback)
 
 
 if __name__ == "__main__":
