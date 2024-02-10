@@ -7,6 +7,7 @@ import pymunk.pygame_util
 import numpy as np
 import random
 from utils.clip_lines_within_box import line_clip
+from utils.scale_and_translate_lines import scale_and_translate_lines
 
 # Load level data from JSON
 with open('main_game/levels.json', 'r') as file:
@@ -223,7 +224,9 @@ def start_game(get_pose_results_callback):
   # position in form (left, top, width, height)
   grids = [
       # ((0.5, 0.5, 0.1, 0.1), (0.5, 0.5, 0.1, 0.1), "green")
-      ((0.5, 0.5, 0.1, 0.1, True), (0.3, 0.3, 0.3, 0.3), "green")
+      ((0.1, 0.1, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
+      ((0.3, 0.3, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
+      ((0.5, 0.5, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green")
   ]
 
   TTL_MAX = 1
@@ -242,6 +245,10 @@ def start_game(get_pose_results_callback):
     render_screen.fill(color=(255, 255, 255))
 
     draw_background_images(bg_images)
+
+    for line, ttl in game_lines:
+      if ttl == TTL_MAX:
+        draw_physics_line(line)
 
     new_game_lines = []
 
@@ -289,13 +296,6 @@ def start_game(get_pose_results_callback):
 
     for ball in balls:
       draw_physics_ball(ball)
-
-    for line in level_lines:
-      draw_physics_line(line)
-
-    for line, ttl in game_lines:
-      if ttl == TTL_MAX:
-        draw_physics_line(line)
 
     draw_physics_flag(flag)
 
@@ -350,32 +350,40 @@ def start_game(get_pose_results_callback):
         head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
         continue
 
-      game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
+      # game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
 
     # physics_space.debug_draw(draw_options)
     for line in lines_results:
       (start_position_x, start_position_y, connection1), (end_position_x, end_position_y, connection2) = line
       if ((connection1, connection2) in allowed_connections) or ((connection2, connection1) in allowed_connections):
         for grid in grids:
-          _, webcam_position, _ = grid
+          game_position, webcam_position, _ = grid
           left, top, width, height = webcam_position
+          game_left, game_top, game_width, game_height = game_position
 
           clipped_line = line_clip(((1 - start_position_x, start_position_y), (1 - end_position_x, end_position_y)), ((left, top), (left + width, top + height)))
-          print(clipped_line)
+          if clipped_line:
+            start_pos, end_pos = scale_and_translate_lines([clipped_line], ((left, top), (left + width, top + height)),
+                                                           ((game_left, game_top), (game_left + game_width, game_top + game_height)))[0]
 
-    for grid in grids:
-      game_position, webcam_position, colour = grid
+            line = add_physics_line(physics_space, start_pos, end_pos)
+            game_lines.append((line, TTL_MAX))
 
-      game_position_left, game_position_top, game_position_width, game_position_height, is_square = game_position
-
-    for line, _ in game_lines:
+    for line in level_lines:
       draw_physics_line(line)
 
-    if head_width and head_height and head_pos:
-      head_lines.append((add_physics_ellipse(physics_space, head_pos, head_width, head_height), TTL_MAX))
-      draw_physics_ellipse(head_pos, head_width, head_height)
+    for line, ttl in game_lines:
+      if ttl == TTL_MAX:
+        draw_physics_line(line)
 
-      if webcam_pose_image_surface:
+    # if head_width and head_height and head_pos:
+    #   head_lines.append((add_physics_ellipse(physics_space, head_pos, head_width, head_height), TTL_MAX))
+    #   draw_physics_ellipse(head_pos, head_width, head_height)
+
+    if webcam_pose_image_surface:
+      for grid in grids:
+        game_position, webcam_position, colour = grid
+
         webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
 
         webcam_position_left = (screen_width - webcam_pose_image_surface.get_width()) + (webcam_pose_image_surface.get_width() * webcam_position_left)
@@ -383,14 +391,16 @@ def start_game(get_pose_results_callback):
         webcam_position_width = webcam_pose_image_surface.get_width() * webcam_position_width
         webcam_position_height = webcam_pose_image_surface.get_height() * webcam_position_height
 
-        webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
+        webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height      
+
+        game_position_left, game_position_top, game_position_width, game_position_height = game_position
 
         pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
 
         game_position_left = screen_width * game_position_left
         game_position_top = screen_height * game_position_top
         game_position_width = screen_width * game_position_width
-        game_position_height = screen_height * game_position_height if not is_square else game_position_width
+        game_position_height = screen_height * game_position_height
 
         game_position = game_position_left, game_position_top, game_position_width, game_position_height
 
