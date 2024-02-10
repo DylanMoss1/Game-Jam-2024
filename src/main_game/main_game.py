@@ -1,3 +1,4 @@
+import math
 import pygame
 from pygame.locals import *
 import pymunk
@@ -106,6 +107,21 @@ def add_physics_line(physics_space, start_position, end_position):
 
   return shape, body
 
+def add_physics_ellipse(space, pos, width, height, num_segments=50):
+    body = pymunk.Body(body_type=pymunk.Body.STATIC)
+    # body.position = pos
+
+    vertices = []
+    for i in range(num_segments):
+        angle = 2.0 * 3.1415 * i / num_segments
+        x = pos[0] + width * 0.5 * pymunk.vec2d.Vec2d(0, 1).rotated(angle).x
+        y = pos[1] + height * 0.5 * pymunk.vec2d.Vec2d(0, 1).rotated(angle).y
+        vertices.append((x, y))
+    # print(vertices)
+    shape = pymunk.Poly(body, vertices, radius=1)
+    space.add(body, shape)
+    return shape, body
+
 
 def add_physics_lines_from_position_list(positions):
   return [add_physics_line(physics_space, start_position, end_position) for start_position, end_position in positions]
@@ -137,6 +153,10 @@ def draw_physics_ball(ball):
 
   pygame.draw.circle(render_screen, "blue", position, radius)
 
+def draw_physics_ellipse(position, width, height):
+
+  pygame.draw.ellipse(render_screen, "blue", pygame.Rect(position[0] - width / 2, position[1] - height / 2, width, height), 1)
+  
 
 def draw_physics_line(line):
   line_shape, _ = line
@@ -215,11 +235,29 @@ def start_game(get_pose_results_callback):
   game_lines_1 = []
   game_lines_0 = []
 
+  head_width = None
+  head_height = None
+  head_pos = None
+
+  head_0 = None
+  head_1 = None
+  head_2 = None
+  head_3 = None
+
   while is_main_game_loop_running:
 
     for line in game_lines_0:
       line_shape, line_body = line
       physics_space.remove(line_shape, line_body)
+    
+    if head_0 is not None:
+      ellipse_shape, ellipse_body = head_0
+      physics_space.remove(ellipse_shape, ellipse_body)
+
+    head_0 = head_1
+    head_1 = head_2
+    head_2 = head_3
+    head_3 = None
 
     game_lines_0 = game_lines_1
     game_lines_1 = game_lines_2
@@ -265,12 +303,27 @@ def start_game(get_pose_results_callback):
       print("Waiting for pose estimation")
 
     for line in previous_lines_results:
-      (start_position_x, start_position_y), (end_position_x, end_position_y) = line
+      (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
 
       start_position = (1 - start_position_x, start_position_y)
       end_position = (1 - end_position_x, end_position_y)
 
+      # head
+      if c1 == 8 and c2 == 7:
+        start_position = scale_positions_to_screen_size(start_position)
+        end_position = scale_positions_to_screen_size(end_position)
+        head_pos = (start_position[0] + end_position[0]) / 2, (start_position[1] + end_position[1]) / 2
+        head_width = math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
+        continue
+
+      if c1 == 4 and c2 == 10:
+        start_position = scale_positions_to_screen_size(start_position)
+        end_position = scale_positions_to_screen_size(end_position)
+        head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
+        continue
+
       game_lines_3.append(add_physics_line(physics_space, start_position, end_position))
+
 
     pygame.display.flip()
 
@@ -288,6 +341,10 @@ def start_game(get_pose_results_callback):
 
     for line in game_lines_3:
       draw_physics_line(line)
+    
+    if head_width and head_height and head_pos:
+      head_3 = add_physics_ellipse(physics_space, head_pos, head_width, head_height)
+      draw_physics_ellipse(head_pos, head_width, head_height)
 
     rect = draw_physics_flag(flag)
 
