@@ -1,3 +1,4 @@
+import json
 import pygame
 from pygame.locals import *
 import pymunk
@@ -5,35 +6,12 @@ import pymunk.pygame_util
 import numpy as np
 import random
 
-LEVEL_BACKGROUND_IMAGES = {
-    "level_1": [("shake_two_look_clean.jpg", (0.1, 0.1), (0.4, 0.4))]
-}
-
-LEVEL_LINE_POS = {
-    "level_1": [
-      ((0.1, 0.1), (0.2, 0.15)),
-      ((0.8, 0.8), (0.85, 0.85)),
-  ],
-    "level_2": [
-      ((0.25, 0.25), (0.35, 0.35)),
-      ((0.4, 0.4), (0.5, 0.5)),
-      ((0.55, 0.55), (0.65, 0.65)),
-  ]
-}
-
-LEVEL_FLAG_POS = {
-    "level_1": (0.825, 0.825),
-    "level_2": (0.5, 0.5)
-
-}
-
-LEVEL_BALL_POS = {
-    "level_1": (0.11, 0.05),
-    "level_2": (0.11, 0.05)
-}
+# Load level data from JSON
+with open('main_game/levels.json', 'r') as file:
+    level_data = json.load(file)
 
 def level_generator():
-  levels_list = list(LEVEL_BALL_POS.keys())
+  levels_list = list(level_data.keys())
   n = 0
   while True:
     yield levels_list[n]
@@ -107,8 +85,13 @@ def add_physics_line(physics_space, start_position, end_position):
   return shape, body
 
 
-def add_physics_lines_from_position_list(positions):
-  return [add_physics_line(physics_space, start_position, end_position) for start_position, end_position in positions]
+def add_physics_lines_from_position_list(physics_space, positions):
+    lines = []
+    for line_pos in positions:
+        start_position = line_pos["start_pos"] # Anna was here
+        end_position = line_pos["end_pos"]
+        lines.append(add_physics_line(physics_space, start_position, end_position))
+    return lines
 
 
 def add_physics_flag(physics_space, position):
@@ -165,7 +148,10 @@ def draw_physics_flag(flag):
 
 def load_and_scale_background_images(level):
   images = []
-  for image_path, top_left, bottom_right in LEVEL_BACKGROUND_IMAGES[level]:
+  for image_info in level_data[level]["background_images"]:
+    image_path = image_info["image"]
+    top_left = tuple(image_info["start_pos"])
+    bottom_right = tuple(image_info["end_pos"])
     # Load the image
     image = pygame.image.load(f"imgs/{image_path}")
     # Scale the image
@@ -180,25 +166,24 @@ def draw_background_images(bg_images):
   for image, position in bg_images:
     render_screen.blit(image, position)
 
-def change_level(current_level, balls=None, level_lines=None, flag=None):
-  if balls is not None:
-    for ball in balls:
-      physics_space.remove(*ball)
-  if level_lines is not None:
-    for line in level_lines:
-      physics_space.remove(*line)
-  if flag is not None:
-    physics_space.remove(*flag)
-  # Lists must be kept alive for balls to render
-  balls = [add_physics_ball(physics_space, LEVEL_BALL_POS[current_level])]
+def change_level(current_level, physics_space, balls=None, level_lines=None, flag=None):
+    if balls is not None:
+        for ball in balls:
+            physics_space.remove(*ball)
+    if level_lines is not None:
+        for line in level_lines:
+            physics_space.remove(*line)
+    if flag is not None:
+        physics_space.remove(*flag)
+    
+    level_info = level_data[current_level]
+    
+    balls = [add_physics_ball(physics_space, tuple(level_info["ball_pos"]))]
+    level_lines = add_physics_lines_from_position_list(physics_space, level_info["line_pos"])
+    flag = add_physics_flag(physics_space, tuple(level_info["flag_pos"]))
+    bg_images = load_and_scale_background_images(current_level)
 
-  level_lines = add_physics_lines_from_position_list(LEVEL_LINE_POS[current_level])
-
-  flag = add_physics_flag(physics_space, LEVEL_FLAG_POS[current_level])
-
-  bg_images = load_and_scale_background_images(current_level)
-
-  return balls, level_lines, flag, bg_images
+    return balls, level_lines, flag, bg_images
 
 def start_game(get_pose_results_callback):
 
@@ -208,7 +193,7 @@ def start_game(get_pose_results_callback):
   is_main_game_loop_running = True
 
 
-  balls, level_lines, flag, bg_images = change_level(current_level)
+  balls, level_lines, flag, bg_images = change_level(current_level, physics_space)
 
   game_lines_3 = []
   game_lines_2 = []
@@ -251,18 +236,27 @@ def start_game(get_pose_results_callback):
     if not (previous_pose_results is None):
 
       webcam_pose_image = np.array(previous_pose_results)
-      # for some reason the image is rotated 90 degrees
+      # For some reason the image is rotated 90 degrees
       webcam_pose_image = np.rot90(webcam_pose_image)
       webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
 
-      rendered_webcam_width = screen_width * 1/6
+      # Dynamically calculate the webcam position and size
+      # Assumisition data from the JSON structure
+      webcam_positions = level_data[current_level]["webcam_pos"]
+      webcam_top_left = tuple(webcam_positions["start_pos"])
+      webcam_bottom_right = tuple(webcam_positions["end_pos"])
 
-      render_position_rect = pygame.Rect((screen_width - 2 * rendered_webcam_width, 0), (rendered_webcam_width, rendered_webcam_width))
+      webcam_top_left_scaled = scale_positions_to_screen_size(webcam_top_left)
+      webcam_bottom_right_scaled = scale_positions_to_screen_size(webcam_bottom_right)
+      webcam_width = webcam_bottom_right_scaled[0] - webcam_top_left_scaled[0]
+      webcam_height = webcam_bottom_right_scaled[1] - webcam_top_left_scaled[1]
+
+      render_position_rect = pygame.Rect(webcam_top_left_scaled, (webcam_width, webcam_height))
 
       render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
 
-    else:
-      print("Waiting for pose estimation")
+    # else:
+      # print("Waiting for pose estimation")
 
     for line in previous_lines_results:
       (start_position_x, start_position_y), (end_position_x, end_position_y) = line
@@ -297,7 +291,7 @@ def start_game(get_pose_results_callback):
       if rect.collidepoint(ball_body.position):
         print("Flag touched")
         current_level = next(levels)
-        balls, level_lines, flag = change_level(current_level, balls, level_lines, flag)
+        balls, level_lines, flag, bg_images = change_level(current_level, balls, level_lines, flag)
         break
 
     render_clock.tick(60)

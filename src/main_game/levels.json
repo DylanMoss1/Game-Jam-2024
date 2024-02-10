@@ -1,0 +1,50 @@
+{
+    "level_1": {
+      "background_images": [
+        {
+          "image": "ikea_intro.png",
+          "start_pos": [0, 0],
+          "end_pos": [1, 1]
+        }
+      ],
+      "line_pos": [
+        {
+          "start_pos": [0.1, 0.1],
+          "end_pos": [0.2, 0.15]
+        },
+        {
+          "start_pos": [0.8, 0.8],
+          "end_pos": [0.85, 0.85]
+        }
+      ],
+      "flag_pos": [0.825, 0.825],
+      "ball_pos": [0.11, 0.05],
+      "webcam_pos": {
+        "start_pos": [0.1488, 0.2430],
+        "end_pos": [0.3688, 0.633]
+      }
+    },
+    "level_2": {
+      "line_pos": [
+        {
+          "start_pos": [0.25, 0.25],
+          "end_pos": [0.35, 0.35]
+        },
+        {
+          "start_pos": [0.4, 0.4],
+          "end_pos": [0.5, 0.5]
+        },
+        {
+          "start_pos": [0.55, 0.55],
+          "end_pos": [0.65, 0.65]
+        }
+      ],
+      "flag_pos": [0.5, 0.5],
+      "ball_pos": [0.11, 0.05],
+      "webcam_pos": {
+        "start_pos": [0.1, 0],
+        "end_pos": [1, 0.2]
+      }
+    }
+  }
+  
