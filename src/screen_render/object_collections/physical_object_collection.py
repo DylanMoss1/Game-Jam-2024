@@ -1,5 +1,5 @@
 from typing import List, Any
-from object_properties.physical import Physical
+from screen_render.object_properties.physical import Physical
 
 
 class PhysicalObjectsCollection():

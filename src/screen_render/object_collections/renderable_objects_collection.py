@@ -1,5 +1,5 @@
 from typing import List, Any
-from object_properties.renderable import Renderable
+from screen_render.object_properties.renderable import Renderable
 
 
 class RenderableObjectsCollection():
