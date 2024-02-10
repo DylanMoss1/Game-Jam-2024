@@ -321,6 +321,8 @@ def start_game(get_pose_results_callback):
 
     webcam_pose_image_surface = None
 
+    webcam_pos = None
+
     if not (pose_results is None):
 
       webcam_pose_image = np.array(pose_results)
@@ -328,7 +330,9 @@ def start_game(get_pose_results_callback):
       webcam_pose_image = np.rot90(webcam_pose_image)
       webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
 
-      render_position_rect = pygame.Rect((screen_width - webcam_pose_image_surface.get_width(), 0), (0, 0))
+      webcam_pos = (screen_width - webcam_pose_image_surface.get_width(), 0)
+
+      render_position_rect = pygame.Rect(webcam_pos, (0, 0))
 
       render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
 
@@ -396,25 +400,28 @@ def start_game(get_pose_results_callback):
 
         webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
 
-        webcam_position_left = (screen_width - webcam_pose_image_surface.get_width()) + (webcam_pose_image_surface.get_width() * webcam_position_left)
-        webcam_position_top = webcam_pose_image_surface.get_height() * webcam_position_top
-        webcam_position_width = webcam_pose_image_surface.get_width() * webcam_position_width
-        webcam_position_height = webcam_pose_image_surface.get_height() * webcam_position_height
+        if webcam_pos: 
+          webcam_pos_x, webcam_pos_y = webcam_pos
 
-        webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height      
+          webcam_position_left = webcam_pos_x + (webcam_pose_image_surface.get_width() * webcam_position_left)
+          webcam_position_top = webcam_pos_y + webcam_pose_image_surface.get_height() * webcam_position_top
+          webcam_position_width = webcam_pose_image_surface.get_width() * webcam_position_width
+          webcam_position_height = webcam_pose_image_surface.get_height() * webcam_position_height
 
-        game_position_left, game_position_top, game_position_width, game_position_height = game_position
+          webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
 
-        pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
+          game_position_left, game_position_top, game_position_width, game_position_height = game_position
 
-        game_position_left = screen_width * game_position_left
-        game_position_top = screen_height * game_position_top
-        game_position_width = screen_width * game_position_width
-        game_position_height = screen_height * game_position_height
+          pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
 
-        game_position = game_position_left, game_position_top, game_position_width, game_position_height
+          game_position_left = screen_width * game_position_left
+          game_position_top = screen_height * game_position_top
+          game_position_width = screen_width * game_position_width
+          game_position_height = screen_height * game_position_height
 
-        pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
+          game_position = game_position_left, game_position_top, game_position_width, game_position_height
+
+          pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
 
     pygame.display.flip()
 
