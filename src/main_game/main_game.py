@@ -7,7 +7,8 @@ import numpy as np
 import random
 
 LEVEL_BACKGROUND_IMAGES = {
-    "level_1": [("shake_two_look_clean.jpg", (0.1, 0.1), (0.4, 0.4))]
+    "level_1": [("shake_two_look_clean.jpg", (0.1, 0.1), (0.4, 0.4))],
+    "level_2": [("shake_two_look_clean.jpg", (0.1, 0.1), (0.4, 0.4))]
 }
 
 LEVEL_LINE_POS = {
@@ -354,7 +355,7 @@ def start_game(get_pose_results_callback):
       if rect.collidepoint(ball_body.position):
         print("Flag touched")
         current_level = next(levels)
-        balls, level_lines, flag = change_level(current_level, balls, level_lines, flag)
+        balls, level_lines, flag, bg_images = change_level(current_level, balls, level_lines, flag)
         break
 
     render_clock.tick(60)
