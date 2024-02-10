@@ -213,7 +213,7 @@ def start_game(get_pose_results_callback):
 
     for line in game_lines_3:
       draw_physics_line(line)
-
+ 
     draw_physics_flag(flag)
 
     render_clock.tick(60)
