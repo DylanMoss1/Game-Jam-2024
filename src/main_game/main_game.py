@@ -303,6 +303,8 @@ def start_game(get_pose_results_callback):
 
     pose_results, lines_results = get_pose_results_callback()
 
+    webcam_pos = None 
+
     if not(pose_results is None):
       webcam_pose_image = np.array(pose_results)
       # For some reason the image is rotated 90 degrees
@@ -319,6 +321,8 @@ def start_game(get_pose_results_callback):
       webcam_bottom_right_scaled = scale_positions_to_screen_size(webcam_bottom_right)
       webcam_width = webcam_bottom_right_scaled[0] - webcam_top_left_scaled[0]
       webcam_height = webcam_bottom_right_scaled[1] - webcam_top_left_scaled[1]
+
+      webcam_pos = webcam_top_left_scaled
 
       render_position_rect = pygame.Rect(webcam_top_left_scaled, (webcam_width, webcam_height))
 
@@ -388,7 +392,7 @@ def start_game(get_pose_results_callback):
 
         webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
 
-        if webcam_pos: 
+        if webcam_pos:
           webcam_pos_x, webcam_pos_y = webcam_pos
 
           webcam_position_left = webcam_pos_x + (webcam_pose_image_surface.get_width() * webcam_position_left)
