@@ -280,6 +280,7 @@ def start_game(get_pose_results_callback):
           _, webcam_position, _ = grid
           left, top, width, height = webcam_position
 
+          print("NEW")
           print((start_position, end_position))
           print(((left, top - height), (left + width, top)))
 
