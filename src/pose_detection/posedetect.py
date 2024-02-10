@@ -4,7 +4,7 @@ from mediapipe.framework.formats import landmark_pb2
 import numpy as np
 import cv2
 
-MODEL_ASSET_PATH = "model/pose_landmarker.task"
+MODEL_ASSET_PATH = "pose_detection/model/pose_landmarker.task"
 
 def draw_landmarks_on_image(rgb_image, detection_result):
   pose_landmarks_list = detection_result.pose_landmarks
