@@ -240,6 +240,8 @@ def start_game(get_pose_results_callback):
 
   head_lines = []
 
+  webcam_pose_image_surface = None
+
   while is_main_game_loop_running:
 
     render_screen.fill(color=(255, 255, 255))
