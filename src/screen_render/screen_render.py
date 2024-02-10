@@ -40,7 +40,7 @@ def setup_object(object, is_renderable, is_physical):
     all_physical_objects.add(object)
 
 
-line = Line(start_position=(0.1, 0.1), end_position=(0.1, 0.2))
+line = Line(start_position=(0.1, 0.9), end_position=(0.9, 0.9))
 setup_object(line, is_renderable=True, is_physical=True)
 
 # --- Main Gameplay Loop ---
