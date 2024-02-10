@@ -2,8 +2,7 @@ import pygame
 from pygame.locals import *
 import pymunk
 import pymunk.pygame_util
-import random
-
+import numpy as np
 
 # --- Initialise PyGame (Rendering Engine) ---
 
@@ -63,7 +62,7 @@ def add_lines_from_position_list(positions):
     add_line(physics_space, start_position, end_position)
 
 
-def main():
+def start_game(q):
 
   is_main_game_loop_running = True
 
@@ -86,8 +85,17 @@ def main():
       elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         is_main_game_loop_running = False
 
+    if q:
+      img = np.array(q)
+      # for some reason the image is rotated 90 degrees
+      img = np.rot90(img)
+      surf = pygame.surfarray.make_surface(img)
+
     render_screen.fill((255, 255, 255))
     physics_space.debug_draw(draw_options)
+
+    if q:
+      render_screen.blit(surf, (0, 0))
 
     pygame.display.flip()
 
@@ -96,4 +104,4 @@ def main():
 
 
 if __name__ == "__main__":
-  main()
+  start_game()
