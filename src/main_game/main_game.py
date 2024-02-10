@@ -29,6 +29,9 @@ BALL_RADIUS = 14
 BALL_ELASTICITY = 1.0
 BALL_FRICTION = 1.0
 
+FLAG_WIDTH = 10
+FLAT_POLE_HEIGHT = 7
+
 
 def scale_positions_to_screen_size(position):
   position_x, position_y = position
@@ -68,7 +71,23 @@ def add_physics_lines_from_position_list(positions):
   return [add_physics_line(physics_space, start_position, end_position) for start_position, end_position in positions]
 
 
+def add_physics_flag(physics_space, position):
+  body = pymunk.Body(body_type=pymunk.Body.STATIC)
+
+  screen_position_x, screen_position_y = scale_positions_to_screen_size(position)
+
+  shape = pymunk.Poly(body, [(screen_position_x, screen_position_y), (screen_position_x + FLAG_WIDTH, screen_position_y), (screen_position_x,
+                      screen_position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT)])
+
+  shape.elasticity = 0.0
+  shape.friction = 0.0
+
+  physics_space.add(body, shape)
+
+  return shape, body
+
 # --- Draw Objects ---
+
 
 def draw_physics_ball(ball):
   ball_shape, ball_body = ball
@@ -91,6 +110,15 @@ def draw_physics_line(line):
   end_position = (end_position_x, end_position_y)
 
   pygame.draw.line(render_screen, "black", start_position, end_position)
+
+
+def draw_physics_flag(flag):
+  flag_shape, _ = flag
+
+  position_x, position_y = flag_shape.position
+
+  pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT))
+  pygame.draw.rect(render_screen, "green", pygame.Rect(position_x, position_y + FLAT_POLE_HEIGHT, position_x + FLAG_WIDTH, position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT))
 
 
 def start_game(get_pose_results_callback):
@@ -166,7 +194,7 @@ def start_game(get_pose_results_callback):
 
     for line in previous_lines_results:
       (start_position_x, start_position_y), (end_position_x, end_position_y) = line
-      
+
       start_position = (1 - start_position_x, start_position_y)
       end_position = (1 - end_position_x, end_position_y)
 
@@ -185,6 +213,8 @@ def start_game(get_pose_results_callback):
 
     for line in game_lines_3:
       draw_physics_line(line)
+
+    draw_physics_flag(flag)
 
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
