@@ -6,8 +6,11 @@ import cv2
 import time
 
 POSE_DETECTION_MODEL_ASSET_PATH = "pose_detection/model/pose_landmarker.task"
-previous_detection_results = None
+previous_detection_results = None, []
 results_validity_countdown = 5
+
+connected_landmarks = [(8, 6), (6, 5), (5, 4), (4, 0), (0, 1), (1, 2), (2, 3), (3, 7), (10, 9), (18, 20), (20, 16), (16, 18), (16, 22), (16, 14), (14, 12), (19, 17), (17, 15), (
+    15, 19), (15, 21), (15, 13), (13, 11), (12, 11), (12, 24), (11, 23), (24, 23), (24, 26), (26, 28), (28, 32), (32, 30), (30, 28), (23, 25), (25, 27), (27, 29), (29, 31), (31, 27)]
 
 
 def draw_landmarks_on_image(rgb_image, detection_result):
@@ -28,6 +31,7 @@ def draw_landmarks_on_image(rgb_image, detection_result):
         pose_landmarks_proto,
         solutions.pose.POSE_CONNECTIONS,
         solutions.drawing_styles.get_default_pose_landmarks_style())
+
   return annotated_image
 
 
@@ -37,9 +41,20 @@ def detection_callback(result: mp.tasks.vision.PoseLandmarkerResult, output_imag
 
   if result.pose_landmarks:
     results_validity_countdown = 5
-    previous_detection_results = result
+
+    landmark_list = result.pose_landmarks[0]
+
+    pose_line_list = []
+
+    for connection1, connection2 in connected_landmarks:
+      landmark1 = landmark_list[connection1]
+      landmark2 = landmark_list[connection2]
+      pose_line_list.append(((landmark1.x, landmark1.y), (landmark2.x, landmark2.y)))
+
+    previous_detection_results = result, pose_line_list
+
   else:
-    previous_detection_results = None
+    previous_detection_results = None, []
 
 
 BaseOptions = mp.tasks.BaseOptions
@@ -54,7 +69,7 @@ options = PoseLandmarkerOptions(
     result_callback=detection_callback)
 
 
-def start_pose_detection(set_webcam_pose_image_callback):
+def start_pose_detection(set_pose_results_callback):
 
   global previous_detection_results
   global results_validity_countdown
@@ -75,17 +90,20 @@ def start_pose_detection(set_webcam_pose_image_callback):
 
       # Process the frame with MediaPipe Pose Landmark model.
       detector.detect_async(mp_image, timestamp)
-      time.sleep(0.02)
+      time.sleep(0.035)
 
-      if previous_detection_results and results_validity_countdown > 0:
-        annotated_image = draw_landmarks_on_image(mp_image.numpy_view(), previous_detection_results)
+      previous_pose_results, previous_lines_results = previous_detection_results
+
+      if previous_pose_results and results_validity_countdown > 0:
+
+        annotated_image = draw_landmarks_on_image(mp_image.numpy_view(), previous_pose_results)
 
         bgr_annotated_frame = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-        set_webcam_pose_image_callback(bgr_annotated_frame)
+        set_pose_results_callback((bgr_annotated_frame, previous_lines_results))
 
         results_validity_countdown -= 1
       else:
-        set_webcam_pose_image_callback(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+        set_pose_results_callback((cv2.cvtColor(frame, cv2.COLOR_RGB2BGR), previous_lines_results))
 
       # Break the loop when 'q' key is pressed
       if cv2.waitKey(1) & 0xFF == ord('q'):

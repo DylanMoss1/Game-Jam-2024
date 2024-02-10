@@ -2,24 +2,24 @@ from main_game.main_game import start_game
 from pose_detection.pose_detection import start_pose_detection
 import threading
 
-webcam_pose_image = None
+pose_results = None, []
 
 
-def set_webcam_pose_image_callback(new_webcam_pose_image):
-  global webcam_pose_image
-  webcam_pose_image = new_webcam_pose_image
+def set_pose_results_callback(new_pose_results):
+  global pose_results
+  pose_results = new_pose_results
 
 
-def get_webcam_pose_image_callback():
-  global webcam_pose_image
-  return webcam_pose_image
+def get_pose_results_callback():
+  global pose_results
+  return pose_results
 
 
 def main():
-  pose_detection_thread = threading.Thread(target=start_pose_detection, args=(set_webcam_pose_image_callback,))
+  pose_detection_thread = threading.Thread(target=start_pose_detection, args=(set_pose_results_callback,))
   pose_detection_thread.start()
 
-  game_thread = threading.Thread(target=start_game, args=(get_webcam_pose_image_callback,))
+  game_thread = threading.Thread(target=start_game, args=(get_pose_results_callback,))
   game_thread.start()
 
 
