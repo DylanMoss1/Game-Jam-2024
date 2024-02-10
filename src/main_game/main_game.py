@@ -259,8 +259,6 @@ def start_game(get_pose_results_callback):
       webcam_pose_image = np.rot90(webcam_pose_image)
       webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
 
-      rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
-
       render_position_rect = pygame.Rect((screen_width - webcam_pose_image_surface.get_width(), 0), (0, 0))
 
       render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
@@ -289,14 +287,6 @@ def start_game(get_pose_results_callback):
           clipped_line = line_clip(((1 - start_position_x, start_position_y), (1 - end_position_x, end_position_y)), ((left, top), (left + width, top + height)))
           print(clipped_line)
 
-    # for line in previous_lines_results:
-    #   (start_position_x, start_position_y), (end_position_x, end_position_y) = line
-
-    #   start_position = (1 - start_position_x, start_position_y)
-    #   end_position = (1 - end_position_x, end_position_y)
-
-    #   game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
-
     for grid in grids:
       game_position, webcam_position, colour = grid
 
@@ -314,19 +304,10 @@ def start_game(get_pose_results_callback):
       if webcam_pose_image_surface:
         webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
 
-        rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
-
-        # (screen_width - webcam_pose_image_surface.get_width() / 2 - (screen_width * WEBCAM_SIZE_SCALAR)) + ((screen_width * WEBCAM_SIZE_SCALAR) * webcam_position_left)
         webcam_position_left = (screen_width - webcam_pose_image_surface.get_width()) + (webcam_pose_image_surface.get_width() * webcam_position_left)
         webcam_position_top = webcam_pose_image_surface.get_height() * webcam_position_top
         webcam_position_width = webcam_pose_image_surface.get_width() * webcam_position_width
         webcam_position_height = webcam_pose_image_surface.get_height() * webcam_position_height
-
-      # webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
-      # webcam_position_left = (WEBCAM_SIZE_SCALAR * webcam_position_left) + screen_width - 2 * rendered_webcam_width
-      # webcam_position_top = (WEBCAM_SIZE_SCALAR * webcam_position_top)
-      # webcam_position_width = screen_width * (WEBCAM_SIZE_SCALAR * webcam_position_width)
-      # webcam_position_height = screen_height * (WEBCAM_SIZE_SCALAR * webcam_position_height)
 
         webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
 
