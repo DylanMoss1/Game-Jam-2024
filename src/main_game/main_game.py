@@ -20,11 +20,12 @@ screen_width, screen_height = pygame.display.get_surface().get_size()
 
 physics_space = pymunk.Space()
 physics_space.gravity = (0.0, 900.0)
-
+# physics_space.collision_slop = 0.5
 
 # --- Add Objects To Scene ---
 
 # All sizes are relative to screen width
+
 
 def scale_size_to_screen_size(size):
   return size * screen_width
@@ -37,6 +38,7 @@ BALL_FRICTION = 1.0
 
 FLAG_WIDTH = scale_size_to_screen_size(0.02)
 FLAT_POLE_HEIGHT = scale_size_to_screen_size(0.02)
+
 
 def scale_positions_to_screen_size(position):
   position_x, position_y = position
@@ -120,8 +122,6 @@ def draw_physics_line(line):
 def draw_physics_flag(flag):
   flag_shape, _ = flag
 
-  print(flag_shape.get_vertices())
-
   position_x, position_y = flag_shape.get_vertices()[0]
 
   pygame.draw.rect(render_screen, "green", pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH))
@@ -145,21 +145,30 @@ def start_game(get_pose_results_callback):
 
   flag = add_physics_flag(physics_space, (0.825, 0.825))
 
-  game_lines_3 = []
-  game_lines_2 = []
-  game_lines_1 = []
-  game_lines_0 = []
+  # [(game_position, webcam_position, allowed_joint_connections, colour)]
+  # position in form (left, top, width, height)
+  grids = [
+      # ((0.5, 0.5, 0.1, 0.1), (0.5, 0.5, 0.1, 0.1), "green")
+      ((0.5, 0.5, 0.1, 0.1), (0.5, 0.5, 0.2, 0.2), "green")
+  ]
+
+  TTL_MAX = 1
+  WEBCAM_SIZE_SCALAR = 1/6
+
+  game_lines = []
 
   while is_main_game_loop_running:
 
-    for line in game_lines_0:
-      line_shape, line_body = line
-      physics_space.remove(line_shape, line_body)
+    new_game_lines = []
 
-    game_lines_0 = game_lines_1
-    game_lines_1 = game_lines_2
-    game_lines_2 = game_lines_3
-    game_lines_3 = []
+    for line, ttl in game_lines:
+      if ttl <= 0:
+        line_shape, line_body = line
+        physics_space.remove(line_shape, line_body)
+      else:
+        new_game_lines.append((line, ttl - 1))
+
+    game_lines = new_game_lines
 
     if random.random() < 0.01:
       balls.append(add_physics_ball(physics_space, (0.11, 0.05)))
@@ -181,6 +190,20 @@ def start_game(get_pose_results_callback):
       elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         is_main_game_loop_running = False
 
+    render_screen.fill(color=(255, 255, 255))
+
+    for ball in balls:
+      draw_physics_ball(ball)
+
+    for line in level_lines:
+      draw_physics_line(line)
+
+    for line, ttl in game_lines:
+      if ttl == TTL_MAX:
+        draw_physics_line(line)
+
+    draw_physics_flag(flag)
+
     previous_pose_results, previous_lines_results = get_pose_results_callback()
 
     if not (previous_pose_results is None):
@@ -190,7 +213,7 @@ def start_game(get_pose_results_callback):
       webcam_pose_image = np.rot90(webcam_pose_image)
       webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
 
-      rendered_webcam_width = screen_width * 1/6
+      rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
 
       render_position_rect = pygame.Rect((screen_width - 2 * rendered_webcam_width, 0), (rendered_webcam_width, rendered_webcam_width))
 
@@ -205,26 +228,45 @@ def start_game(get_pose_results_callback):
       start_position = (1 - start_position_x, start_position_y)
       end_position = (1 - end_position_x, end_position_y)
 
-      game_lines_3.append(add_physics_line(physics_space, start_position, end_position))
+      game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
+
+
+    for grid in grids:
+      game_position, webcam_position, colour = grid
+
+      game_position_left, game_position_top, game_position_width, game_position_height = game_position
+
+      game_position_left = screen_width * game_position_left
+      game_position_top = screen_height * game_position_top
+      game_position_width = screen_width * game_position_width
+      game_position_height = screen_width * game_position_height
+
+      game_position = game_position_left, game_position_top, game_position_width, game_position_height
+
+      rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
+
+      webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
+      webcam_position_left = screen_width * (WEBCAM_SIZE_SCALAR * webcam_position_left) + screen_width - 2 * rendered_webcam_width
+      webcam_position_top = screen_height * (WEBCAM_SIZE_SCALAR * webcam_position_top)
+      webcam_position_width = screen_width * (WEBCAM_SIZE_SCALAR * webcam_position_width)
+      webcam_position_height = screen_width * (WEBCAM_SIZE_SCALAR * webcam_position_height)
+
+      webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
+
+      pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
+      pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
+
 
     pygame.display.flip()
 
-    render_screen.fill(color=(255, 255, 255))
-    # physics_space.debug_draw(draw_options)
-
-    for ball in balls:
-      draw_physics_ball(ball)
-
-    for line in level_lines:
-      draw_physics_line(line)
-
-    for line in game_lines_3:
-      draw_physics_line(line)
-
-    draw_physics_flag(flag)
-
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
+
+    # num_physics_steps = 10
+
+    # render_clock.tick(60)
+    # for _ in range(num_physics_steps):
+    #   physics_space.step(1 / (60.0 * num_physics_steps))
 
 
 if __name__ == "__main__":
