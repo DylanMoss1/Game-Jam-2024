@@ -120,7 +120,7 @@ def draw_physics_line(line):
 def draw_physics_flag(flag):
   flag_shape, _ = flag
 
-  print(flag_shape.get_vertices())
+  # print(flag_shape.get_vertices())
 
   position_x, position_y = flag_shape.get_vertices()[0]
 

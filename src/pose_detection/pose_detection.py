@@ -87,7 +87,8 @@ def start_pose_detection(set_pose_results_callback):
 
       mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
-      timestamp = int(round(time.time()*1000))
+      # timestamp = int(time.time() * 1000)
+      timestamp = int(cap.get(cv2.CAP_PROP_POS_MSEC))
 
       # Process the frame with MediaPipe Pose Landmark model.
       detector.detect_async(mp_image, timestamp)
