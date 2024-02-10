@@ -1,38 +1,67 @@
-import line
+from objects.line import Line
+from object_collections.renderable_objects_collection import RenderableObjectsCollection
+from object_collections.physical_object_collection import PhysicalObjectsCollection
 import pygame
 from pygame.locals import *
 import pymunk
 import pymunk.pygame_util
 
-# --- Initialise PyGame --- 
+# --- Initialise PyGame ---
 
 pygame.init()
-pygame_clock = pygame.time.Clock()
+render_clock = pygame.time.Clock()
 
-pygame_display_surface = pygame.display.set_mode((400, 300), RESIZABLE)
+render_screen = pygame.display.set_mode((400, 300), RESIZABLE)
 
 is_main_game_loop_running = True
 
-pygame_font = pygame.font.SysFont(None, 48)
+render_font = pygame.font.SysFont(None, 48)
 
-# --- Initialise PyMunk --- 
+# --- Initialise PyMunk ---
 
-pymonk_gravity_scale = -900.0
-pymonk_wind_scale = 0.0
+physics_gravity_scale = -900.0
+physics_wind_scale = 0.0
 
-pymonk_physics_space = pymunk.Space()
-pymonk_physics_space.gravity = (pymonk_gravity_scale, pymonk_wind_scale)
+physics_engine = pymunk.Space()
+physics_engine.gravity = (physics_gravity_scale, physics_wind_scale)
 
-# --- Main Gameplay Loop --- 
+# --- Add New Objects To Scene ---
+
+all_renderable_objects = RenderableObjectsCollection()
+all_physical_objects = PhysicalObjectsCollection()
+
+
+def setup_object(object, is_renderable, is_physical):
+  if is_renderable:
+    all_renderable_objects.add(object)
+
+  if is_physical:
+    object.setup_physics(physics_engine)
+    all_physical_objects.add(object)
+
+
+line = Line(start_position=(0.1, 0.1), end_position=(0.1, 0.2))
+setup_object(line, is_renderable=True, is_physical=True)
+
+# --- Main Gameplay Loop ---
 
 while is_main_game_loop_running:
-  pygame_clock.tick(60)
+
+  current_screen_width = render_screen.get_width()
+  current_screen_height = render_screen.get_height()
+
+  render_clock.tick(60)
   for pygame_user_input_event in pygame.event.get():
     if pygame_user_input_event.type == pygame.QUIT:
       is_main_game_loop_running = False
+    elif pygame_user_input_event.type == VIDEORESIZE:
+      all_physical_objects.setup_physics_on_all(physics_engine)
 
-  
+  render_screen.fill((200, 200, 200))
 
+  all_renderable_objects.render_all(render_screen, current_screen_width, current_screen_height)
+
+  physics_engine.step(1/60.0)
   pygame.display.update()
 
 pygame.quit()
