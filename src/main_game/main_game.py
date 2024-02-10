@@ -5,6 +5,37 @@ import pymunk.pygame_util
 import numpy as np
 import random
 
+LEVEL_LINE_POS = {
+    "level_1": [
+      ((0.1, 0.1), (0.2, 0.15)),
+      ((0.8, 0.8), (0.85, 0.85)),
+  ],
+    "level_2": [
+      ((0.25, 0.25), (0.35, 0.35)),
+      ((0.4, 0.4), (0.5, 0.5)),
+      ((0.55, 0.55), (0.65, 0.65)),
+  ]
+}
+
+LEVEL_FLAG_POS = {
+    "level_1": (0.825, 0.825),
+    "level_2": (0.5, 0.5)
+
+}
+
+LEVEL_BALL_POS = {
+    "level_1": (0.11, 0.05),
+    "level_2": (0.11, 0.05)
+}
+
+def level_generator():
+  levels_list = list(LEVEL_BALL_POS.keys())
+  n = 0
+  while True:
+    yield levels_list[n]
+    n = (n + 1) % len(levels_list)
+
+
 # --- Initialise PyGame (Rendering Engine) ---
 
 pygame.init()
@@ -123,27 +154,38 @@ def draw_physics_flag(flag):
   # print(flag_shape.get_vertices())
 
   position_x, position_y = flag_shape.get_vertices()[0]
-
-  pygame.draw.rect(render_screen, "green", pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH))
+  rect = pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH)
+  pygame.draw.rect(render_screen, "green", rect)
   pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT))
+  return rect
 
+def change_level(current_level, balls=None, level_lines=None, flag=None):
+  if balls is not None:
+    for ball in balls:
+      physics_space.remove(*ball)
+  if level_lines is not None:
+    for line in level_lines:
+      physics_space.remove(*line)
+  if flag is not None:
+    physics_space.remove(*flag)
+  # Lists must be kept alive for balls to render
+  balls = [add_physics_ball(physics_space, LEVEL_BALL_POS[current_level])]
+
+  level_lines = add_physics_lines_from_position_list(LEVEL_LINE_POS[current_level])
+
+  flag = add_physics_flag(physics_space, LEVEL_FLAG_POS[current_level])
+
+  return balls, level_lines, flag
 
 def start_game(get_pose_results_callback):
 
+  levels = level_generator()
+  current_level = next(levels)
+
   is_main_game_loop_running = True
 
-  # Lists must be kept alive for balls to render
-  balls = [add_physics_ball(physics_space, (0.11, 0.05))]
 
-  level_lines = add_physics_lines_from_position_list([
-      ((0.1, 0.1), (0.2, 0.15)),
-      # ((0.25, 0.25), (0.35, 0.35)),
-      # ((0.4, 0.4), (0.5, 0.5)),
-      # ((0.55, 0.55), (0.65, 0.65)),
-      ((0.8, 0.8), (0.85, 0.85)),
-  ])
-
-  flag = add_physics_flag(physics_space, (0.825, 0.825))
+  balls, level_lines, flag = change_level(current_level)
 
   game_lines_3 = []
   game_lines_2 = []
@@ -221,7 +263,16 @@ def start_game(get_pose_results_callback):
     for line in game_lines_3:
       draw_physics_line(line)
 
-    draw_physics_flag(flag)
+    rect = draw_physics_flag(flag)
+
+    # Check if flag is touched, if so, change level
+    for ball in balls:
+      _, ball_body = ball
+      if rect.collidepoint(ball_body.position):
+        print("Flag touched")
+        current_level = next(levels)
+        balls, level_lines, flag = change_level(current_level, balls, level_lines, flag)
+        break
 
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
