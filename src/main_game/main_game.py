@@ -193,7 +193,7 @@ def start_game(get_pose_results_callback):
   # position in form (left, top, width, height)
   grids = [
       # ((0.5, 0.5, 0.1, 0.1), (0.5, 0.5, 0.1, 0.1), "green")
-      ((0.5, 0.5, 0.1, 0.1, True), (0, 0, 0.5, 0.5), "green")
+      ((0.5, 0.5, 0.1, 0.1, True), (0.3, 0.3, 0.3, 0.3), "green")
   ]
 
   TTL_MAX = 1
@@ -250,6 +250,8 @@ def start_game(get_pose_results_callback):
 
     pose_results, lines_results = get_pose_results_callback()
 
+    webcam_pose_image_surface = None
+
     if not (pose_results is None):
 
       webcam_pose_image = np.array(pose_results)
@@ -259,10 +261,9 @@ def start_game(get_pose_results_callback):
 
       rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
 
-      render_position_rect = pygame.Rect((screen_width - rendered_webcam_width, 0), (rendered_webcam_width, rendered_webcam_width))
-      render_position_area = pygame.Rect(((webcam_pose_image_surface.get_width() - rendered_webcam_width)/ 2, (webcam_pose_image_surface.get_height()-rendered_webcam_width) / 2), (rendered_webcam_width, rendered_webcam_width))
+      render_position_rect = pygame.Rect((screen_width - webcam_pose_image_surface.get_width(), 0), (0, 0))
 
-      render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect, area=render_position_area)
+      render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
 
     else:
       print("Waiting for pose estimation")
@@ -270,10 +271,10 @@ def start_game(get_pose_results_callback):
     # allowed_connections = [(8, 6), (6, 5), (5, 4), (4, 0), (0, 1), (1, 2), (2, 3), (3, 7), (10, 9), (18, 20), (20, 16), (16, 18), (16, 22), (16, 14), (14, 12), (19, 17), (17, 15), (
     #     15, 19), (15, 21), (15, 13), (13, 11), (12, 11), (12, 24), (11, 23), (24, 23), (24, 26), (26, 28), (28, 32), (32, 30), (30, 28), (23, 25), (25, 27), (27, 29), (29, 31), (31, 27)]
 
-    allowed_connections = [(14, 16)]
+    allowed_connections = [(13, 15)]
 
     for line in lines_results:
-      connection, start_position, end_position = line
+      connection, (start_position_x, start_position_y), (end_position_x, end_position_y) = line
       connection1, connection2 = connection
       if connection in allowed_connections or ((connection2, connection1) in allowed_connections):
         for grid in grids:
@@ -281,10 +282,11 @@ def start_game(get_pose_results_callback):
           left, top, width, height = webcam_position
 
           print("NEW")
-          print((start_position, end_position))
-          print(((left, top - height), (left + width, top)))
+          print((start_position_x, start_position_y), (end_position_x, end_position_y))
+          print((1 - start_position_x, start_position_y), (1 - end_position_x, end_position_y))
+          print(((left, top), (left + width, top + height)))
 
-          clipped_line = line_clip((start_position, end_position), ((left, top - height), (left + width, top)))
+          clipped_line = line_clip(((1 - start_position_x, start_position_y), (1 - end_position_x, end_position_y)), ((left, top), (left + width, top + height)))
           print(clipped_line)
 
     # for line in previous_lines_results:
@@ -307,20 +309,18 @@ def start_game(get_pose_results_callback):
 
       game_position = game_position_left, game_position_top, game_position_width, game_position_height
 
-      webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
+      pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
 
-      rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
+      if webcam_pose_image_surface:
+        webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
 
-      print(screen_width)
-      print(screen_width - rendered_webcam_width)
-      print(rendered_webcam_width * webcam_position_left)
-      print(rendered_webcam_width)
-      print(webcam_position_left)
+        rendered_webcam_width = screen_width * WEBCAM_SIZE_SCALAR
 
-      webcam_position_left = (screen_width - rendered_webcam_width) + (rendered_webcam_width * webcam_position_left)
-      webcam_position_top = rendered_webcam_width * webcam_position_top
-      webcam_position_width = rendered_webcam_width * webcam_position_width
-      webcam_position_height = rendered_webcam_width * webcam_position_height
+        # (screen_width - webcam_pose_image_surface.get_width() / 2 - (screen_width * WEBCAM_SIZE_SCALAR)) + ((screen_width * WEBCAM_SIZE_SCALAR) * webcam_position_left)
+        webcam_position_left = (screen_width - webcam_pose_image_surface.get_width()) + (webcam_pose_image_surface.get_width() * webcam_position_left)
+        webcam_position_top = webcam_pose_image_surface.get_height() * webcam_position_top
+        webcam_position_width = webcam_pose_image_surface.get_width() * webcam_position_width
+        webcam_position_height = webcam_pose_image_surface.get_height() * webcam_position_height
 
       # webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height = webcam_position
       # webcam_position_left = (WEBCAM_SIZE_SCALAR * webcam_position_left) + screen_width - 2 * rendered_webcam_width
@@ -328,10 +328,9 @@ def start_game(get_pose_results_callback):
       # webcam_position_width = screen_width * (WEBCAM_SIZE_SCALAR * webcam_position_width)
       # webcam_position_height = screen_height * (WEBCAM_SIZE_SCALAR * webcam_position_height)
 
-      webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
+        webcam_position = webcam_position_left, webcam_position_top, webcam_position_width, webcam_position_height
 
-      pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
-      pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
+        pygame.draw.rect(render_screen, colour, pygame.Rect(webcam_position), 3)
 
     pygame.display.flip()
 
