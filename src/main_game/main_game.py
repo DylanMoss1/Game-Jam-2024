@@ -24,14 +24,19 @@ physics_space.gravity = (0.0, 900.0)
 
 # --- Add Objects To Scene ---
 
+# All sizes are relative to screen width
+
+def scale_size_to_screen_size(size):
+  return size * screen_width
+
+
 BALL_MASS = 1
-BALL_RADIUS = 14
+BALL_RADIUS = scale_size_to_screen_size(0.007)
 BALL_ELASTICITY = 1.0
 BALL_FRICTION = 1.0
 
-FLAG_WIDTH = 10
-FLAT_POLE_HEIGHT = 7
-
+FLAG_WIDTH = scale_size_to_screen_size(0.02)
+FLAT_POLE_HEIGHT = scale_size_to_screen_size(0.02)
 
 def scale_positions_to_screen_size(position):
   position_x, position_y = position
@@ -115,10 +120,12 @@ def draw_physics_line(line):
 def draw_physics_flag(flag):
   flag_shape, _ = flag
 
-  position_x, position_y = flag_shape.position
+  print(flag_shape.get_vertices())
 
-  pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT))
-  pygame.draw.rect(render_screen, "green", pygame.Rect(position_x, position_y + FLAT_POLE_HEIGHT, position_x + FLAG_WIDTH, position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT))
+  position_x, position_y = flag_shape.get_vertices()[0]
+
+  pygame.draw.rect(render_screen, "green", pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH))
+  pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT))
 
 
 def start_game(get_pose_results_callback):
@@ -213,7 +220,7 @@ def start_game(get_pose_results_callback):
 
     for line in game_lines_3:
       draw_physics_line(line)
- 
+
     draw_physics_flag(flag)
 
     render_clock.tick(60)
