@@ -22,6 +22,8 @@ def level_generator():
   while True:
     yield levels_list[n]
     n = (n + 1) % len(levels_list)
+    if n == 0:
+      n = 1
 
 # --- Initialise PyGame (Rendering Engine) ---
 
