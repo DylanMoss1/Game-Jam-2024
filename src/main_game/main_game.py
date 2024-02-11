@@ -9,9 +9,10 @@ import random
 from utils.clip_lines_within_box import line_clip
 from utils.scale_and_translate_lines import scale_and_translate_lines
 
-# Load level data from JSON
+# --- Load level data from JSON ---
+
 with open('main_game/levels.json', 'r') as file:
-    level_data = json.load(file)
+  level_data = json.load(file)
 
 
 def level_generator():
@@ -21,8 +22,8 @@ def level_generator():
     yield levels_list[n]
     n = (n + 1) % len(levels_list)
 
-
 # --- Initialise PyGame (Rendering Engine) ---
+
 
 pygame.init()
 render_clock = pygame.time.Clock()
@@ -41,20 +42,13 @@ physics_space.gravity = (0.0, 900.0)
 
 # --- Add Objects To Scene ---
 
-# All sizes are relative to screen width
-
-
-def scale_size_to_screen_size(size):
-  return size * screen_width
-
-
 BALL_MASS = 1
-BALL_RADIUS = scale_size_to_screen_size(0.007)
+BALL_RADIUS = 0.007 * screen_width
 BALL_ELASTICITY = 1.0
 BALL_FRICTION = 1.0
 
-FLAG_WIDTH = scale_size_to_screen_size(0.02)
-FLAT_POLE_HEIGHT = scale_size_to_screen_size(0.02)
+FLAG_WIDTH = 0.02 * screen_width
+FLAT_POLE_HEIGHT = 0.02 * screen_width
 
 
 def scale_positions_to_screen_size(position):
@@ -92,16 +86,16 @@ def add_physics_line(physics_space, start_position, end_position):
 
 
 def add_physics_lines_from_position_list(physics_space, positions):
-    lines = []
-    for line_pos in positions:
-        start_position = line_pos["start_pos"] # Anna was here
-        end_position = line_pos["end_pos"]
-        lines.append(add_physics_line(physics_space, start_position, end_position))
-    return lines
+  lines = []
+  for line_pos in positions:
+    start_position = line_pos["start_pos"]  # Anna was here
+    end_position = line_pos["end_pos"]
+    lines.append(add_physics_line(physics_space, start_position, end_position))
+  return lines
+
 
 def add_physics_ellipse(space, pos, width, height, num_segments=50):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
-  # body.position = pos
 
   vertices = []
   for i in range(num_segments):
@@ -109,10 +103,10 @@ def add_physics_ellipse(space, pos, width, height, num_segments=50):
     x = pos[0] + width * 0.5 * pymunk.vec2d.Vec2d(0, 1).rotated(angle).x
     y = pos[1] + height * 0.5 * pymunk.vec2d.Vec2d(0, 1).rotated(angle).y
     vertices.append((x, y))
-  # print(vertices)
   shape = pymunk.Poly(body, vertices, radius=1)
   space.add(body, shape)
   return shape, body
+
 
 def add_physics_flag(physics_space, position):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -120,7 +114,7 @@ def add_physics_flag(physics_space, position):
   screen_position_x, screen_position_y = scale_positions_to_screen_size(position)
 
   shape = pymunk.Poly(body, [(screen_position_x, screen_position_y), (screen_position_x + FLAG_WIDTH, screen_position_y), (screen_position_x,
-                      screen_position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y + FLAG_WIDTH + FLAT_POLE_HEIGHT)])
+                      screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT)])
 
   shape.elasticity = 0.0
   shape.friction = 0.0
@@ -142,7 +136,6 @@ def draw_physics_ball(ball):
 
 
 def draw_physics_ellipse(position, width, height):
-
   pygame.draw.ellipse(render_screen, "blue", pygame.Rect(position[0] - width / 2, position[1] - height / 2, width, height), 1)
 
 
@@ -166,8 +159,11 @@ def draw_physics_flag(flag):
   position_x, position_y = flag_shape.get_vertices()[0]
   rect = pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH)
   pygame.draw.rect(render_screen, "green", rect)
+  pygame.draw.rect(render_screen, "black", rect, width=1)
   pygame.draw.line(render_screen, "black", (position_x, position_y), (position_x, position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT))
 
+
+# --- Handle Background Objects ---
 
 def load_and_scale_background_images(level):
   images = []
@@ -190,54 +186,98 @@ def draw_background_images(bg_images):
   for image, position in bg_images:
     render_screen.blit(image, position)
 
-def change_level(current_level, physics_space, balls=None, level_lines=None, flag=None):
-    if balls is not None:
-        for ball in balls:
-            physics_space.remove(*ball)
-    if level_lines is not None:
-        for line in level_lines:
-            physics_space.remove(*line)
-    if flag is not None:
-        physics_space.remove(*flag)
-    
-    level_info = level_data[current_level]
-    
-    balls = [add_physics_ball(physics_space, tuple(level_info["ball_pos"]))]
-    level_lines = add_physics_lines_from_position_list(physics_space, level_info["line_pos"])
-    flag = add_physics_flag(physics_space, tuple(level_info["flag_pos"]))
-    bg_images = load_and_scale_background_images(current_level)
+# --- Handle Level Change ---
 
-    return balls, level_lines, flag, bg_images
+
+def change_level(current_level, physics_space, balls=None, level_lines=None, flag=None):
+  if balls is not None:
+    for ball in balls:
+      physics_space.remove(*ball)
+  if level_lines is not None:
+    for line in level_lines:
+      physics_space.remove(*line)
+  if flag is not None:
+    physics_space.remove(*flag)
+
+  level_info = level_data[current_level]
+
+  balls = [add_physics_ball(physics_space, tuple(level_info["ball_pos"]))]
+  level_lines = add_physics_lines_from_position_list(physics_space, level_info["line_pos"])
+  flag = add_physics_flag(physics_space, tuple(level_info["flag_pos"]))
+  bg_images = load_and_scale_background_images(current_level)
+
+  return balls, level_lines, flag, bg_images
+
+# --- Setup Action Grids (i.e. boxes which reflect poses onto the game) ---
+
+
+# [(game_position, webcam_position, colour)]
+# position in form (left, top, width, height)
+grids = [
+    ((0.1, 0.1, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
+    ((0.3, 0.3, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
+    ((0.5, 0.5, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green")
+]
+
+# --- Main Game Loop Utils ---
+
+TTL_MAX = 1
+WEBCAM_SIZE_SCALAR = 1/4
+
+
+def remove_dead_game_lines(game_lines):
+
+  new_game_lines = []
+
+  for line, ttl in game_lines:
+    if ttl <= 0:
+      physics_space.remove(*line)
+    else:
+      new_game_lines.append((line, ttl - 1))
+
+  return new_game_lines
+
+
+def remove_dead_head_lines(head_lines):
+
+  new_head_lines = []
+
+  for head, ttl in head_lines:
+    if ttl <= 0:
+      physics_space.remove(*head)
+    else:
+      new_head_lines.append((head, ttl - 1))
+
+  return new_head_lines
+
+
+def remove_dead_balls(balls):
+  new_balls = []
+
+  for ball in balls:
+    _, ball_body = ball
+    if ball_body.position.y > screen_height * 1.1:
+      physics_space.remove(*ball)
+    else:
+      new_balls.append(ball)
+
+  return new_balls
+
+
+# --- Main Game Loop ---
 
 
 def start_game(get_pose_results_callback):
 
+  # --- Generate First Level ---
+
   levels = level_generator()
   current_level = next(levels)
+  balls, level_lines, flag, bg_images = change_level(current_level, physics_space)
 
   is_main_game_loop_running = True
 
-
-  balls, level_lines, flag, bg_images = change_level(current_level, physics_space)
-
-  # [(game_position, webcam_position, colour)]
-  # position in form (left, top, width, height)
-  grids = [
-      # ((0.5, 0.5, 0.1, 0.1), (0.5, 0.5, 0.1, 0.1), "green")
-      ((0.1, 0.1, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
-      ((0.3, 0.3, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green"),
-      ((0.5, 0.5, 0.2, 0.2), (0.3, 0.3, 0.3, 0.3), "green")
-  ]
-
-  TTL_MAX = 1
-  WEBCAM_SIZE_SCALAR = 1/4
-
   game_lines = []
-
-  head_width = None
-  head_height = None
-  head_pos = None
-
   head_lines = []
 
   webcam_pose_image_surface = None
@@ -245,48 +285,21 @@ def start_game(get_pose_results_callback):
   while is_main_game_loop_running:
 
     render_screen.fill(color=(255, 255, 255))
-
     draw_background_images(bg_images)
 
+    # Draw most up-to-date line (i.e. one with the highest possible time-to-live)
     for line, ttl in game_lines:
       if ttl == TTL_MAX:
         draw_physics_line(line)
 
-    new_game_lines = []
+    game_lines = remove_dead_game_lines(game_lines)
+    head_lines = remove_dead_head_lines(head_lines)
 
-    for line, ttl in game_lines:
-      if ttl <= 0:
-        line_shape, line_body = line
-        physics_space.remove(line_shape, line_body)
-      else:
-        new_game_lines.append((line, ttl - 1))
-
-    game_lines = new_game_lines
-
-    new_head_lines = []
-
-    for head, ttl in head_lines:
-      if ttl <= 0:
-        ellipse_shape, ellipse_body = head
-        physics_space.remove(ellipse_shape, ellipse_body)
-      else:
-        new_head_lines.append((head, ttl - 1))
-
-    head_lines = new_head_lines
-
+    # Add new balls to the game randomly 
     if random.random() < 0.01:
       balls.append(add_physics_ball(physics_space, (0.11, 0.05)))
 
-    balls_to_remove = []
-
-    for ball in balls:
-      _, ball_body = ball
-      if ball_body.position.y > screen_height * 1.1:
-        balls_to_remove.append(ball)
-
-    for ball in balls_to_remove:
-      balls.remove(ball)
-      physics_space.remove(*ball)
+    balls = remove_dead_balls(balls)
 
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -294,18 +307,19 @@ def start_game(get_pose_results_callback):
       elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         is_main_game_loop_running = False
 
-    # render_screen.fill(color=(255, 255, 255))
-
+    # Draw any remaining balls 
     for ball in balls:
       draw_physics_ball(ball)
 
+    # Draw the end goal flag 
     draw_physics_flag(flag)
+
 
     pose_results, lines_results = get_pose_results_callback()
 
-    webcam_pos = None 
+    webcam_pos = None
 
-    if not(pose_results is None):
+    if not (pose_results is None):
       webcam_pose_image = np.array(pose_results)
       # For some reason the image is rotated 90 degrees
       webcam_pose_image = np.rot90(webcam_pose_image)
@@ -328,8 +342,6 @@ def start_game(get_pose_results_callback):
 
       render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
 
-    # else:
-      # print("Waiting for pose estimation")
 
     for line in lines_results:
       (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
@@ -422,19 +434,12 @@ def start_game(get_pose_results_callback):
       ball_shape, _ = ball
       flag_shape, _ = flag
       if len(flag_shape.shapes_collide(ball_shape).points) > 0:
-        print("Flag touched")
         current_level = next(levels)
         balls, level_lines, flag, bg_images = change_level(current_level, physics_space, balls, level_lines, flag)
         break
 
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
-
-    # num_physics_steps = 10
-
-    # render_clock.tick(60)
-    # for _ in range(num_physics_steps):
-    #   physics_space.step(1 / (60.0 * num_physics_steps))
 
 
 if __name__ == "__main__":
