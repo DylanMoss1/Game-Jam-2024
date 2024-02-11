@@ -370,10 +370,13 @@ def start_game(get_pose_results_callback):
       start_position = (1 - start_position_x, start_position_y)
       end_position = (1 - end_position_x, end_position_y)
 
-      # allowed_connections = [(8, 6), (6, 5), (5, 4), (4, 0), (0, 1), (1, 2), (2, 3), (3, 7), (10, 9), (18, 20), (20, 16), (16, 18), (16, 22), (16, 14), (14, 12), (19, 17), (17, 15), (
-      #     15, 19), (15, 21), (15, 13), (13, 11), (12, 11), (12, 24), (11, 23), (24, 23), (24, 26), (26, 28), (28, 32), (32, 30), (30, 28), (23, 25), (25, 27), (27, 29), (29, 31), (31, 27)]
-
-      allowed_connections = [(13, 15)]
+      allowed_connections = level_data[current_level].get("allowed_limb_connections",
+                                                          [[8, 6], [6, 5], [5, 4], [4, 0], [0, 1], [1, 2],
+                                                           [2, 3], [3, 7], [10, 9], [18, 20], [20, 16], [16, 18],
+                                                           [16, 22], [16, 14], [14, 12], [19, 17], [17, 15], [15, 19],
+                                                           [15, 21], [15, 13], [13, 11], [12, 11], [12, 24], [11, 23],
+                                                           [24, 23], [24, 26], [26, 28], [28, 32], [32, 30], [30, 28],
+                                                           [23, 25], [25, 27], [27, 29], [29, 31], [31, 27]])
 
       # head
       if c1 == 8 and c2 == 7:
@@ -394,7 +397,7 @@ def start_game(get_pose_results_callback):
     # physics_space.debug_draw(draw_options)
     for line in lines_results:
       (start_position_x, start_position_y, connection1), (end_position_x, end_position_y, connection2) = line
-      if ((connection1, connection2) in allowed_connections) or ((connection2, connection1) in allowed_connections):
+      if ([connection1, connection2] in allowed_connections) or ([connection2, connection1] in allowed_connections):
         for grid in grids:
           game_position, webcam_position, _ = grid
           left, top, width, height = webcam_position
