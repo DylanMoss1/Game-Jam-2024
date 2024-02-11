@@ -314,7 +314,7 @@ def start_game(get_pose_results_callback):
   while is_main_game_loop_running:
 
     render_screen.fill(color=(255, 255, 255))
-    if current_level == "level_0": 
+    if current_level == "level_0":
       draw_background_images(bg_images)
 
     # Draw most up-to-date line (i.e. one with the highest possible time-to-live)
@@ -380,16 +380,16 @@ def start_game(get_pose_results_callback):
 
       if current_level == "level_0":
         render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect, area=pygame.Rect(
-          ((webcam_pose_image_surface.get_width() - x) / 2, (webcam_pose_image_surface.get_height() - y) / 2), (x, y)))
-      else: 
-        render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect) 
-    # else: 
+            ((webcam_pose_image_surface.get_width() - x) / 2, (webcam_pose_image_surface.get_height() - y) / 2), (x, y)))
+      else:
+        render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
+    # else:
       # print("Waiting for pose estimation")
 
-    c16 = None 
-    c15 = None 
-    c8 = None 
-    c7 = None 
+    c16 = None
+    c15 = None
+    c8 = None
+    c7 = None
 
     for line in lines_results:
       (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
@@ -436,10 +436,9 @@ def start_game(get_pose_results_callback):
         head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
         continue
 
-
-    if current_level == "level_0": 
-      if c16 and c8 and c15 and c7: 
-        if c16 < c8 and c15 < c7: 
+    if current_level == "level_0":
+      if c16 and c8 and c15 and c7:
+        if c16 < c8 and c15 < c7:
           current_level = next(levels)
           balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space, balls, level_lines, flag)
 
