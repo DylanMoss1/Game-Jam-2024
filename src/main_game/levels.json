@@ -26,6 +26,13 @@
       "allowed_limb_connections": [[13, 15]]
     },
     "level_2": {
+      "background_images": [
+        {
+          "image": "tiled_ikea_logo.png",
+          "start_pos": [0, 0],
+          "end_pos": [1, 1]
+        }
+      ],
       "line_pos": [
         {
           "start_pos": [0.25, 0.25],

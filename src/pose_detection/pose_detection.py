@@ -51,9 +51,10 @@ def detection_callback(result: mp.tasks.vision.PoseLandmarkerResult, output_imag
       pose_line_list.append(((landmark1.x, landmark1.y, connection1), (landmark2.x, landmark2.y, connection2)))
 
     annotated_image = draw_landmarks_on_image(output_image.numpy_view(), result)
-
+    # segmentation_mask = result.segmentation_masks[0].numpy_view()
+    # visualized_mask = np.repeat(segmentation_mask[:, :, np.newaxis], 3, axis=2) * 255
     bgr_annotated_frame = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-
+    # bgr_annotated_frame = visualized_mask
     set_pose_results_callback_global((bgr_annotated_frame, pose_line_list))
 
 
@@ -66,6 +67,7 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 options = PoseLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=POSE_DETECTION_MODEL_ASSET_PATH),
     running_mode=VisionRunningMode.LIVE_STREAM,
+    output_segmentation_masks=True,
     result_callback=detection_callback)
 
 
