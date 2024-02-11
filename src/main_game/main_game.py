@@ -114,8 +114,9 @@ def add_physics_flag(physics_space, position):
 
   screen_position_x, screen_position_y = scale_positions_to_screen_size(position)
 
-  shape = pymunk.Poly(body, [(screen_position_x, screen_position_y), (screen_position_x + FLAG_WIDTH, screen_position_y), (screen_position_x,
-                      screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT)])
+  # shape = pymunk.Poly(body, [(screen_position_x, screen_position_y), (screen_position_x + FLAG_WIDTH, screen_position_y), (screen_position_x,
+  #                     screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT)])
+  shape = pymunk.Segment(body, (screen_position_x, screen_position_y), (screen_position_x, screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT), 1)
 
   shape.elasticity = 0.0
   shape.friction = 0.0
@@ -157,7 +158,7 @@ def draw_physics_line(line):
 def draw_physics_flag(flag):
   flag_shape, _ = flag
 
-  position_x, position_y = flag_shape.get_vertices()[0]
+  position_x, position_y = flag_shape.a
   rect = pygame.Rect(position_x, position_y - FLAT_POLE_HEIGHT - FLAG_WIDTH, FLAG_WIDTH, FLAG_WIDTH)
   pygame.draw.rect(render_screen, "green", rect)
   pygame.draw.rect(render_screen, "black", rect, width=1)
@@ -221,8 +222,9 @@ def change_level(current_level, physics_space, balls=None, level_lines=None, fla
   flag = add_physics_flag(physics_space, tuple(level_info["flag_pos"]))
   bg_images = load_and_scale_background_images(current_level)
   grids = parse_grids(level_info["grids"])
+  allow_head = level_info["allow_head"]
 
-  return balls, level_lines, flag, bg_images, grids
+  return balls, level_lines, flag, bg_images, grids, allow_head 
 
 # --- Setup Action Grids (i.e. boxes which reflect poses onto the game) ---
 
@@ -285,7 +287,7 @@ def start_game(get_pose_results_callback):
 
   levels = level_generator()
   current_level = next(levels)
-  balls, level_lines, flag, bg_images, grids = change_level(current_level, physics_space)
+  balls, level_lines, flag, bg_images, grids, allow_head = change_level(current_level, physics_space)
 
   is_main_game_loop_running = True
 
@@ -361,8 +363,6 @@ def start_game(get_pose_results_callback):
 
     # else:
       # print("Waiting for pose estimation")
-
-    allow_head = True
 
     for line in lines_results:
       (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
@@ -470,7 +470,7 @@ def start_game(get_pose_results_callback):
       flag_shape, _ = flag
       if len(flag_shape.shapes_collide(ball_shape).points) > 0:
         current_level = next(levels)
-        balls, level_lines, flag, bg_images, grids = change_level(current_level, physics_space, balls, level_lines, flag)
+        balls, level_lines, flag, bg_images, grids, allow_head = change_level(current_level, physics_space, balls, level_lines, flag)
         break
 
     render_clock.tick(60)
