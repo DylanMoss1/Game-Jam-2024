@@ -13,8 +13,8 @@ def scale_and_translate_ellipse(ellipse, box_x, box_y):
     (x_min_y, y_min_y), (x_max_y, y_max_y) = box_y
 
     # Calculate scale factors for both axes
-    scale_x = (x_max_y - x_min_y) / (x_max_x - x_min_x)
-    scale_y = (y_max_y - y_min_y) / (y_max_x - x_min_x)
+    scale_x = abs((x_max_y - x_min_y) / (x_max_x - x_min_x))
+    scale_y = abs((y_max_y - y_min_y) / (y_max_x - x_min_x))
 
     # Calculate translation needed
     translate_x = x_min_y - (x_min_x * scale_x)
@@ -25,6 +25,6 @@ def scale_and_translate_ellipse(ellipse, box_x, box_y):
     new_x = (x * scale_x) + translate_x
     new_y = (y * scale_y) + translate_y
     new_width = width * scale_x
-    new_height = height * scale_y
+    new_height = height * 0.5
 
     return ((new_x, new_y), new_width, new_height)

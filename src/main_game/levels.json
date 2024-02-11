@@ -184,6 +184,47 @@
       "allowed_limb_connections": [[13, 15], [11, 13], [11, 12], [12, 14], [14, 16]],
       "allow_head": false,
       "instruction":"both arms and chest"
+    },
+    "level_6": {
+      "background_images": [
+        {
+          "image": "ikea_intro.png",
+          "start_pos": [0, 0],
+          "end_pos": [1, 1]
+        }
+      ],
+      "line_pos": [
+        {
+          "start_pos": [0.1, 0.1],
+          "end_pos": [0.25, 0.15]
+        },
+        {
+          "start_pos": [0.4, 0.3],
+          "end_pos": [0.3, 0.45]
+        },
+        {
+          "start_pos": [0.3, 0.6],
+          "end_pos": [0.4, 0.65]
+        },
+        {
+          "start_pos": [0.55, 0.7],
+        "end_pos": [0.7, 0.75]
+        }
+      ],
+      "flag_pos": [0.87, 0.85],
+      "ball_pos": [0.11, 0.05],
+      "webcam_pos": {
+        "start_pos": [0.1488, 0.2430],
+        "end_pos": [0.3688, 0.633]
+      },
+      "grids": [
+        [[0.4, 0.57, 0.15, 0.2], [0.45, 0.05, 0.25, 0.25], "red"],
+        [[0.15, 0.47, 0.15, 0.15], [0.2, 0.4, 0.25, 0.25], "green"],
+        [[0.7, 0.67, 0.15, 0.15], [0.7, 0.7, 0.25, 0.25], "blue"]
+      ],
+      "allowed_limb_connections": [[13, 15], [11, 13], [12, 14], [14, 16], [24,26], [26,28], [23,25], [25,27]],
+      "allow_head": true,
+      "instruction":"any limb and head"
     }
   }
   
