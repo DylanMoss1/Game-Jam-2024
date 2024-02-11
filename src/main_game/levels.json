@@ -29,7 +29,8 @@
         [[0.6, 0.57, 0.2, 0.2], [0.3, 0.3, 0.3, 0.3], "green"]
       ],
       "allowed_limb_connections": [[13, 15]],
-      "allow_head": false 
+      "allow_head": false,
+      "instruction": "only arm"
     },
     "level_2": {
       "background_images": [
@@ -164,7 +165,8 @@
         [[0.6, 0.67, 0.2, 0.1], [0.7, 0.7, 0.25, 0.25], "blue"]
       ],
       "allowed_limb_connections": [[13, 15], [11, 13], [11, 12], [12, 14], [14, 16]],
-      "allow_head": false
+      "allow_head": false,
+      "instruction":"only head"
     }
   }
   
