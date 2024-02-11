@@ -393,19 +393,21 @@ def start_game(get_pose_results_callback):
     c8 = None
     c7 = None
 
+    print([(c1, c2) for ((x, y, c1), (x2, y2, c2)) in lines_results])
+
     for line in lines_results:
       (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
 
       start_position = (1 - start_position_x, start_position_y)
       end_position = (1 - end_position_x, end_position_y)
 
-      allowed_connections = level_data[current_level].get("allowed_limb_connections",
-                                                          [[8, 6], [6, 5], [5, 4], [4, 0], [0, 1], [1, 2],
-                                                           [2, 3], [3, 7], [10, 9], [18, 20], [20, 16], [16, 18],
-                                                           [16, 22], [16, 14], [14, 12], [19, 17], [17, 15], [15, 19],
-                                                           [15, 21], [15, 13], [13, 11], [12, 11], [12, 24], [11, 23],
-                                                           [24, 23], [24, 26], [26, 28], [28, 32], [32, 30], [30, 28],
-                                                           [23, 25], [25, 27], [27, 29], [29, 31], [31, 27]])
+      ### Starting to add hands-above-head detection:
+
+      # right hand to top of brow
+      # if c1 == 20 and c2 == 4:
+        
+      # left hand to top of brow
+      # if c1 == 19 and c2 == 4:
 
       if c1 == 16:
         c16 = start_position_y
@@ -432,6 +434,7 @@ def start_game(get_pose_results_callback):
         head_width = math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
         continue
 
+      # head height
       if c1 == 4 and c2 == 10:
         # start_position = scale_positions_to_screen_size(start_position)
         # end_position = scale_positions_to_screen_size(end_position)
@@ -445,6 +448,14 @@ def start_game(get_pose_results_callback):
           balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space, balls, level_lines, flag)
 
       # game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
+
+    allowed_connections = level_data[current_level].get("allowed_limb_connections",
+        [[8, 6], [6, 5], [5, 4], [4, 0], [0, 1], [1, 2],
+          [2, 3], [3, 7], [10, 9], [18, 20], [20, 16], [16, 18],
+          [16, 22], [16, 14], [14, 12], [19, 17], [17, 15], [15, 19],
+          [15, 21], [15, 13], [13, 11], [12, 11], [12, 24], [11, 23],
+          [24, 23], [24, 26], [26, 28], [28, 32], [32, 30], [30, 28],
+          [23, 25], [25, 27], [27, 29], [29, 31], [31, 27]])
 
     # physics_space.debug_draw(draw_options)
     for line in lines_results:
