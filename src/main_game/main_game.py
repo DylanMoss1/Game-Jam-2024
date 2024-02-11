@@ -221,8 +221,9 @@ def change_level(current_level, physics_space, balls=None, level_lines=None, fla
   flag = add_physics_flag(physics_space, tuple(level_info["flag_pos"]))
   bg_images = load_and_scale_background_images(current_level)
   grids = parse_grids(level_info["grids"])
+  text = level_info["instruction"]
 
-  return balls, level_lines, flag, bg_images, grids
+  return balls, level_lines, flag, bg_images, grids, text
 
 # --- Setup Action Grids (i.e. boxes which reflect poses onto the game) ---
 
@@ -285,7 +286,7 @@ def start_game(get_pose_results_callback):
 
   levels = level_generator()
   current_level = next(levels)
-  balls, level_lines, flag, bg_images, grids = change_level(current_level, physics_space)
+  balls, level_lines, flag, bg_images, grids, text = change_level(current_level, physics_space)
 
   is_main_game_loop_running = True
 
@@ -462,6 +463,9 @@ def start_game(get_pose_results_callback):
 
           pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
 
+    render_screen.blit(render_font.render(current_level, True, (0,0,0)), (0, 0))
+    if webcam_pos:
+      render_screen.blit(render_font.render(text, True, (0, 0, 0)), (webcam_pos[0] + webcam_width /2.2, screen_height / 2.2))
     pygame.display.flip()
 
     # Check if flag is touched, if so, change level
@@ -470,7 +474,7 @@ def start_game(get_pose_results_callback):
       flag_shape, _ = flag
       if len(flag_shape.shapes_collide(ball_shape).points) > 0:
         current_level = next(levels)
-        balls, level_lines, flag, bg_images, grids = change_level(current_level, physics_space, balls, level_lines, flag)
+        balls, level_lines, flag, bg_images, grids, text = change_level(current_level, physics_space, balls, level_lines, flag)
         break
 
     render_clock.tick(60)
