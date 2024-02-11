@@ -7,6 +7,7 @@ import pymunk.pygame_util
 import numpy as np
 import random
 from utils.clip_lines_within_box import line_clip
+from utils.scale_and_translate_ellipse import scale_and_translate_ellipse
 from utils.scale_and_translate_lines import scale_and_translate_lines
 
 # Load level data from JSON
@@ -330,6 +331,8 @@ def start_game(get_pose_results_callback):
 
     # else:
       # print("Waiting for pose estimation")
+    
+    allow_head = True
 
     for line in lines_results:
       (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
@@ -344,15 +347,15 @@ def start_game(get_pose_results_callback):
 
       # head
       if c1 == 8 and c2 == 7:
-        start_position = scale_positions_to_screen_size(start_position)
-        end_position = scale_positions_to_screen_size(end_position)
+        # start_position = scale_positions_to_screen_size(start_position)
+        # end_position = scale_positions_to_screen_size(end_position)
         head_pos = (start_position[0] + end_position[0]) / 2, (start_position[1] + end_position[1]) / 2
         head_width = math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
         continue
 
       if c1 == 4 and c2 == 10:
-        start_position = scale_positions_to_screen_size(start_position)
-        end_position = scale_positions_to_screen_size(end_position)
+        # start_position = scale_positions_to_screen_size(start_position)
+        # end_position = scale_positions_to_screen_size(end_position)
         head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
         continue
 
@@ -382,9 +385,21 @@ def start_game(get_pose_results_callback):
       if ttl == TTL_MAX:
         draw_physics_line(line)
 
-    # if head_width and head_height and head_pos:
-    #   head_lines.append((add_physics_ellipse(physics_space, head_pos, head_width, head_height), TTL_MAX))
-    #   draw_physics_ellipse(head_pos, head_width, head_height)
+
+    if allow_head and head_width and head_height and head_pos:
+      for grid in grids:
+        game_position, webcam_position, _ = grid
+        left, top, width, height = webcam_position
+        game_left, game_top, game_width, game_height = game_position
+
+        in_box = head_pos[0] > left and head_pos[0] < left + width and head_pos[1] > top and head_pos[1] < top + height
+        if in_box:
+          new_head_pos, new_head_width, new_head_height = scale_and_translate_ellipse((head_pos, head_width, head_height), ((left, top), (left + width, top + height)),
+                                                           ((game_left, game_top), (game_left + game_width, game_top + game_height)))
+          new_head_pos = scale_positions_to_screen_size(new_head_pos)
+          new_head_width, new_head_height = scale_positions_to_screen_size((new_head_width, new_head_height)) 
+          head_lines.append((add_physics_ellipse(physics_space, new_head_pos, new_head_width, new_head_height), TTL_MAX))
+          draw_physics_ellipse(new_head_pos, new_head_width, new_head_height)
 
     if webcam_pose_image_surface:
       for grid in grids:
