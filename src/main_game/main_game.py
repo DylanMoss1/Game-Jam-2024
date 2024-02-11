@@ -514,7 +514,7 @@ def start_game(get_pose_results_callback):
 
     render_screen.blit(render_font.render(parse(current_level), True, (0, 0, 0)), (0, 0))
     if webcam_pos:
-      render_screen.blit(render_font.render(text, True, (0, 0, 0)), (webcam_pos[0] + webcam_width / 2.2, screen_height / 2.2))
+      render_screen.blit(render_font.render(text, True, (0, 0, 0)), (webcam_pos[0] + webcam_width / 3, screen_height / 2.2))
     pygame.display.flip()
 
     # Check if flag is touched, if so, change level
