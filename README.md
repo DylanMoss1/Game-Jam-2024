@@ -1,5 +1,5 @@
 # Reflect Upon Your Actions 
 
-Cambridge Game Jam "CamJam" 2024.
+Cambridge Game Jam 2024.
 
 Theme: Reflection 
