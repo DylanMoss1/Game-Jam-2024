@@ -97,7 +97,7 @@ def start_pose_detection(set_pose_results_callback):
         timestamp += int(1000 / fps)
       else:
         # Assume 30 fps
-        timestamp_ms += 33
+        timestamp += 33
 
 
       # Process the frame with MediaPipe Pose Landmark model.
