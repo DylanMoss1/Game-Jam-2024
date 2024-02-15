@@ -10,7 +10,20 @@ Built in 47h for the [Cambridge Game Jam 2024](https://itch.io/jam/camgamjam24) 
 - tied most popular game :)
 
 ## To Play
-Run the executable from this repo or on [itch.io](https://dylanmoss.itch.io/reflect-upon-you-actions). Be sure to connect a webcam first :).
+Be sure to connect a webcam first :).
+### Windows
+Run the executable on [itch.io](https://dylanmoss.itch.io/reflect-upon-you-actions).
+### Linux
+```
+# Optional: Create a venv first
+python -m venv venv
+source ./venv/bin/activate
+# Install requirements
+pip install -r requirements.txt
+# Run the game
+cd src && python main.py
+```
+
 
 ## Development
 Install `requirements.txt` with python 3.10, then run `main.py`. Currently seems incompatible with MacOS.
