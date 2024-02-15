@@ -80,6 +80,7 @@ def start_pose_detection(set_pose_results_callback):
   cap = cv2.VideoCapture(0)
 
   with PoseLandmarker.create_from_options(options) as detector:
+    timestamp = 0
     while True:
       # Read a frame from the webcam
       ret, frame = cap.read()
@@ -90,7 +91,8 @@ def start_pose_detection(set_pose_results_callback):
       mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
       # timestamp = int(time.time() * 1000)
-      timestamp = int(cap.get(cv2.CAP_PROP_POS_MSEC))
+      # timestamp = int(cap.get(cv2.CAP_PROP_POS_MSEC))
+      timestamp += int(1000 / cap.get(cv2.CAP_PROP_FPS))
 
       # Process the frame with MediaPipe Pose Landmark model.
       detector.detect_async(mp_image, timestamp)
