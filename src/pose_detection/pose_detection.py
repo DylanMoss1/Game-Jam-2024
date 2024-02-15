@@ -92,7 +92,13 @@ def start_pose_detection(set_pose_results_callback):
 
       # timestamp = int(time.time() * 1000)
       # timestamp = int(cap.get(cv2.CAP_PROP_POS_MSEC))
-      timestamp += int(1000 / cap.get(cv2.CAP_PROP_FPS))
+      fps = cap.get(cv2.CAP_PROP_FPS)
+      if fps:
+        timestamp += int(1000 / fps)
+      else:
+        # Assume 30 fps
+        timestamp_ms += 33
+
 
       # Process the frame with MediaPipe Pose Landmark model.
       detector.detect_async(mp_image, timestamp)
