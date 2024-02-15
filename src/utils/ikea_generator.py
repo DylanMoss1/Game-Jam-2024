@@ -20,7 +20,7 @@ white_background = Image.new('RGB', img_resized.size, (255, 255, 255))
 
 # Blend the resized image with the white background
 # Adjust the alpha parameter to control the 'opacity' effect
-alpha = 0.75  # Experiment with this value, closer to 1 makes the image lighter
+alpha = 0.94  # Experiment with this value, closer to 1 makes the image lighter
 img_lighter = Image.blend(img_resized, white_background, alpha=alpha)
 
 

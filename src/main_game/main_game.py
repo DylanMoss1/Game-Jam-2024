@@ -287,168 +287,57 @@ def parse(current_level):
   level_int = current_level[6:]
   return f"Level: {level_int}"
 
-# --- Main Game Loop ---
 
-
-def start_game(get_pose_results_callback):
-
-  # --- Generate First Level ---
-
-  levels = level_generator()
-  current_level = next(levels)
-
-  if current_level == "level_0":
-    balls, level_lines, flag, bg_images, grids, allow_head, text = [], [], None, load_and_scale_background_images("level_0"), [], False, ""
-  else:
-    balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space)
-
+def get_events():
   is_main_game_loop_running = True
-
-  game_lines = []
-  head_lines = []
-
-  webcam_pose_image_surface = None
-
-  head_width = None
-  head_height = None
-  head_pos = None
-
-  while is_main_game_loop_running:
-
-    render_screen.fill(color=(255, 255, 255))
-    if current_level == "level_0":
-      draw_background_images(bg_images)
-
-    # Draw most up-to-date line (i.e. one with the highest possible time-to-live)
-    for line, ttl in game_lines:
-      if ttl == TTL_MAX:
-        draw_physics_line(line)
-
-    game_lines = remove_dead_game_lines(game_lines)
-    head_lines = remove_dead_head_lines(head_lines)
-
-    if current_level != "level_0":
-      # Add new balls to the game randomly
-      if random.random() < 0.01:
-        balls.append(add_physics_ball(physics_space, (0.11, 0.05)))
-
-      balls = remove_dead_balls(balls)
-
-      for event in pygame.event.get():
+  for event in pygame.event.get():
         if event.type == pygame.QUIT:
           is_main_game_loop_running = False
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
           is_main_game_loop_running = False
+  return is_main_game_loop_running
 
-      # Draw any remaining balls
-      for ball in balls:
-        draw_physics_ball(ball)
-
-    # Draw the end goal flag
-    draw_physics_flag(flag)
-
-    pose_results, lines_results = get_pose_results_callback()
-
-    webcam_pos = None
-
-    if not (pose_results is None):
-      webcam_pose_image = np.array(pose_results)
-      # For some reason the image is rotated 90 degrees
-      webcam_pose_image = np.rot90(webcam_pose_image)
-      webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
-
-      # Dynamically calculate the webcam position and size
-      # Assumisition data from the JSON structure
-      webcam_positions = level_data[current_level]["webcam_pos"]
-
-      if current_level == "level_0":
-        webcam_top_left = scale_positions_to_screen_size(tuple(webcam_positions["start_pos"]))
-        webcam_bottom_right = scale_positions_to_screen_size(tuple(webcam_positions["end_pos"]))
-      else:
-        webcam_top_left = (screen_width - webcam_pose_image_surface.get_width(), 0)
-        webcam_bottom_right = (screen_width, webcam_pose_image_surface.get_width())
-
-      # webcam_top_left_scaled = scale_positions_to_screen_size(webcam_top_left)
-      # webcam_bottom_right_scaled = scale_positions_to_screen_size(webcam_bottom_right)
-      webcam_width = webcam_bottom_right[0] - webcam_top_left[0]
-      webcam_height = webcam_bottom_right[1] - webcam_top_left[1]
-
-      webcam_pos = webcam_top_left
-
-      render_position_rect = pygame.Rect(webcam_pos, (0, 0))
-
-      x = screen_width * 0.22
-      y = screen_width * 0.22
-
-      if current_level == "level_0":
-        render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect, area=pygame.Rect(
-            ((webcam_pose_image_surface.get_width() - x) / 2, (webcam_pose_image_surface.get_height() - y) / 2), (x, y)))
-      else:
-        render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
-    # else:
-      # print("Waiting for pose estimation")
-
-    c16 = None
-    c15 = None
-    c8 = None
-    c7 = None
-
-    print([(c1, c2) for ((x, y, c1), (x2, y2, c2)) in lines_results])
-
-    for line in lines_results:
-      (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
-
-      start_position = (1 - start_position_x, start_position_y)
-      end_position = (1 - end_position_x, end_position_y)
-
-      ### Starting to add hands-above-head detection:
-
-      # right hand to top of brow
-      # if c1 == 20 and c2 == 4:
-        
-      # left hand to top of brow
-      # if c1 == 19 and c2 == 4:
-
-      if c1 == 16:
-        c16 = start_position_y
-      elif c2 == 16:
-        c16 = end_position_y
-      if c1 == 15:
-        c15 = start_position_y
-      elif c2 == 15:
-        c15 = end_position_y
-      if c1 == 7:
-        c7 = start_position_y
-      elif c2 == 7:
-        c7 = end_position_y
-      if c1 == 8:
-        c8 = start_position_y
-      elif c2 == 8:
-        c8 = end_position_y
-
-      # head
-      if c1 == 8 and c2 == 7:
-        # start_position = scale_positions_to_screen_size(start_position)
-        # end_position = scale_positions_to_screen_size(end_position)
-        head_pos = (start_position[0] + end_position[0]) / 2, (start_position[1] + end_position[1]) / 2
-        head_width = math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
-        continue
-
-      # head height
-      if c1 == 4 and c2 == 10:
-        # start_position = scale_positions_to_screen_size(start_position)
-        # end_position = scale_positions_to_screen_size(end_position)
-        head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
-        continue
+def initialise_game():
+    levels = level_generator()
+    current_level = next(levels)
 
     if current_level == "level_0":
-      if c16 and c8 and c15 and c7:
-        if c16 < c8 and c15 < c7:
-          current_level = next(levels)
-          balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space, balls, level_lines, flag)
+      balls, level_lines, flag, bg_images, grids, allow_head, text = [], [], None, load_and_scale_background_images("level_0"), [], False, ""
+    else:
+      balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space)
 
-      # game_lines.append((add_physics_line(physics_space, start_position, end_position), TTL_MAX))
+    is_main_game_loop_running = True
 
+    game_lines = []
+    head_lines = []
+
+    webcam_pose_image_surface = None
+
+    head_width = None
+    head_height = None
+    head_pos = None
+
+    return levels, current_level, balls, level_lines, flag, bg_images, grids, allow_head, text, is_main_game_loop_running, game_lines, head_lines, webcam_pose_image_surface, head_width, head_height, head_pos
+
+def draw_background(bg_images):
+    render_screen.fill(color=(255, 255, 255))
+    #if current_level == "level_0":
+    draw_background_images(bg_images)
+
+def add_remove_balls(balls):
+  # Add new balls to the game randomly
+  if random.random() < 0.01:
+      balls.append(add_physics_ball(physics_space, (0.11, 0.05)))
+
+  balls = remove_dead_balls(balls)
+  return balls
+
+def draw_balls(balls):
+    # Draw any remaining balls
+    for ball in balls:
+        draw_physics_ball(ball)
+
+def add_game_lines(level_data, current_level, lines_results, grids, game_lines, physics_space, TTL_MAX):
     allowed_connections = level_data[current_level].get("allowed_limb_connections",
         [[8, 6], [6, 5], [5, 4], [4, 0], [0, 1], [1, 2],
           [2, 3], [3, 7], [10, 9], [18, 20], [20, 16], [16, 18],
@@ -473,15 +362,12 @@ def start_game(get_pose_results_callback):
 
             line = add_physics_line(physics_space, start_pos, end_pos)
             game_lines.append((line, TTL_MAX))
+    
+    return game_lines
 
-    for line in level_lines:
-      draw_physics_line(line)
 
-    for line, ttl in game_lines:
-      if ttl == TTL_MAX:
-        draw_physics_line(line)
-
-    if allow_head and head_width and head_height and head_pos:
+def add_and_draw_heads(allow_head, head_width, head_height, head_pos, grids, head_lines, physics_space, TTL_MAX):
+  if allow_head and head_width and head_height and head_pos:
       for grid in grids:
         game_position, webcam_position, _ = grid
         left, top, width, height = webcam_position
@@ -495,8 +381,10 @@ def start_game(get_pose_results_callback):
           new_head_width, new_head_height = scale_positions_to_screen_size((new_head_width, new_head_height))
           head_lines.append((add_physics_ellipse(physics_space, new_head_pos, new_head_width, new_head_height), TTL_MAX))
           draw_physics_ellipse(new_head_pos, new_head_width, new_head_height)
+  return head_lines
 
-    if webcam_pose_image_surface:
+def draw_rectangles(webcam_pose_image_surface, grids, webcam_pos):
+  if webcam_pose_image_surface:
       for grid in grids:
         game_position, webcam_position, colour = grid
 
@@ -525,19 +413,160 @@ def start_game(get_pose_results_callback):
 
           pygame.draw.rect(render_screen, colour, pygame.Rect(game_position), 3)
 
+def get_xflipped_points_dict_from_lines(lines_results):
+    points_dict = {}
+    for line in lines_results:
+      (start_position_x, start_position_y, c1), (end_position_x, end_position_y, c2) = line
+      if c1 not in points_dict:
+        points_dict[c1] = (1 - start_position_x, start_position_y)
+      if c2 not in points_dict:
+        points_dict[c2] = (1 - end_position_x, end_position_y)
+    return points_dict
+
+def get_head_info(points_dict):
+    # Assuming the points for head and head height are available in points_dict
+    # and using the identifiers 8, 7 for head width, and 4, 10 for head height calculation
+    
+    # Calculate head position and width
+    if 8 in points_dict and 7 in points_dict:
+        start_position, end_position = points_dict[8], points_dict[7]
+        head_pos = ((start_position[0] + end_position[0]) / 2, (start_position[1] + end_position[1]) / 2)
+        head_width = math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
+    else:
+        head_pos = (None, None)
+        head_width = None
+
+    # Calculate head height
+    if 4 in points_dict and 10 in points_dict:
+        start_position, end_position = points_dict[4], points_dict[10]
+        head_height = 3 * math.sqrt((start_position[0] - end_position[0]) ** 2 + (start_position[1] - end_position[1]) ** 2)
+    else:
+        head_height = None
+
+    return head_width, head_height, head_pos
+
+
+def are_arms_above_head(points_dict):
+  return all(key in points_dict for key in [16, 8, 15, 7]) and points_dict[16][1] < points_dict[8][1] and points_dict[15][1] < points_dict[7][1]
+
+def get_webcam_info(pose_results, current_level):
+    webcam_pose_image = np.array(pose_results)
+    # For some reason the image is rotated 90 degrees
+    webcam_pose_image = np.rot90(webcam_pose_image)
+    webcam_pose_image_surface = pygame.surfarray.make_surface(webcam_pose_image)
+
+    # Dynamically calculate the webcam position and size
+    # Assumisition data from the JSON structure
+    webcam_positions = level_data[current_level]["webcam_pos"]
+
+    if current_level == "level_0":
+      webcam_top_left = scale_positions_to_screen_size(tuple(webcam_positions["start_pos"]))
+      webcam_bottom_right = scale_positions_to_screen_size(tuple(webcam_positions["end_pos"]))
+    else:
+      webcam_top_left = (screen_width - webcam_pose_image_surface.get_width(), 0)
+      webcam_bottom_right = (screen_width, webcam_pose_image_surface.get_width())
+
+    # webcam_top_left_scaled = scale_positions_to_screen_size(webcam_top_left)
+    # webcam_bottom_right_scaled = scale_positions_to_screen_size(webcam_bottom_right)
+    webcam_width = webcam_bottom_right[0] - webcam_top_left[0]
+    webcam_height = webcam_bottom_right[1] - webcam_top_left[1]
+
+    webcam_pos = webcam_top_left
+
+    render_position_rect = pygame.Rect(webcam_pos, (0, 0))
+
+
+
+    return webcam_pose_image_surface, webcam_pos, webcam_width, webcam_height, render_position_rect
+
+
+def is_touching_flag(flag, balls):
+  if flag is None:
+    return False
+  for ball in balls:
+    ball_shape, _ = ball
+    flag_shape, _ = flag
+    if len(flag_shape.shapes_collide(ball_shape).points) > 0:
+      return True
+  return False
+
+def draw_webcam(current_level, webcam_pose_image_surface, webcam_pos, webcam_width, webcam_height, render_position_rect):
+    if current_level == "level_0":
+      cropped_webcam_width = screen_width * 0.22
+      cropped_webcam_height = screen_width * 0.22
+      render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect, area=pygame.Rect(
+          (webcam_pose_image_surface.get_width() - cropped_webcam_width) / 2, # left
+          (webcam_pose_image_surface.get_height() - cropped_webcam_height) / 2, # top
+          cropped_webcam_width, # width
+          cropped_webcam_height)) # height
+    else:
+      render_screen.blit(source=webcam_pose_image_surface, dest=render_position_rect)
+
+# --- Main Game Loop ---
+def start_game(get_pose_results_callback):
+
+  # --- Generate First Level ---
+
+  levels, current_level, balls, level_lines, flag, bg_images, grids, allow_head, text, is_main_game_loop_running, game_lines, head_lines, webcam_pose_image_surface, head_width, head_height, head_pos = initialise_game()
+
+  while is_main_game_loop_running:
+
+    is_main_game_loop_running = get_events()
+    draw_background(bg_images)
+
+    if current_level != "level_0":
+      balls = add_remove_balls(balls)
+      draw_balls(balls)
+
+    draw_physics_flag(flag)
+
+    pose_results, lines_results = get_pose_results_callback()
+
+    webcam_pos = None
+    if not (pose_results is None):
+      webcam_pose_image_surface, webcam_pos, webcam_width, webcam_height, render_position_rect = get_webcam_info(pose_results, current_level)
+    
+    if not (pose_results is None):
+      draw_webcam(current_level, webcam_pose_image_surface, webcam_pos, webcam_width, webcam_height, render_position_rect)
+    # else:
+      # print("Waiting for pose estimation")
+    # print([(c1, c2) for ((x, y, c1), (x2, y2, c2)) in lines_results])
+
+    game_lines = remove_dead_game_lines(game_lines)
+    game_lines = add_game_lines(level_data, current_level, lines_results, grids, game_lines, physics_space, TTL_MAX)
+
+    for line in level_lines:
+      draw_physics_line(line)
+
+    for line, ttl in game_lines:
+      if ttl == TTL_MAX:
+        draw_physics_line(line)
+
+    points_dict = get_xflipped_points_dict_from_lines(lines_results)
+    head_width, head_height, head_pos = get_head_info(points_dict)
+    head_lines = remove_dead_head_lines(head_lines)
+    head_lines = add_and_draw_heads(allow_head, head_width, head_height, head_pos, grids, head_lines, physics_space, TTL_MAX)
+
+    draw_rectangles(webcam_pose_image_surface, grids, webcam_pos)
+
+    # Print level number text
     render_screen.blit(render_font.render(parse(current_level), True, (0, 0, 0)), (0, 0))
+
+    # Print instruction text
     if webcam_pos:
       render_screen.blit(render_font.render(text, True, (0, 0, 0)), (webcam_pos[0] + webcam_width / 3, screen_height / 2.2))
+
     pygame.display.flip()
 
-    # Check if flag is touched, if so, change level
-    if flag:
-      for ball in balls:
-        ball_shape, _ = ball
-        flag_shape, _ = flag
-        if len(flag_shape.shapes_collide(ball_shape).points) > 0:
+    # Check level 0 win condition (arms above head)
+    if current_level == "level_0":
+      if are_arms_above_head(points_dict):
           current_level = next(levels)
           balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space, balls, level_lines, flag)
+    # Check if flag is touched, if so, change level
+    if is_touching_flag(flag, balls):
+      current_level = next(levels)
+      balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space, balls, level_lines, flag)
 
     render_clock.tick(60)
     physics_space.step(1 / 60.0)
