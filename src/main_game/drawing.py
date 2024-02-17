@@ -81,7 +81,7 @@ def draw_balls(balls):
     for ball in balls:
         draw_physics_ball(ball)
 
-def draw_heads(game_heads: List[Tuple[Poly, Body]]):
+def draw_heads(game_heads):
     for head in game_heads:
         phys_obj, new_head_pos, new_head_width, new_head_height, ttl = head
         # poly_obj, body_obj = head_line # Assuming the physics_object contains position and dimensions
