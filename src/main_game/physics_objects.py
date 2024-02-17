@@ -7,8 +7,8 @@ from pygame.locals import *
 
 from main_game.globals import (BALL_ELASTICITY, BALL_FRICTION, BALL_MASS,
                                BALL_RADIUS, FLAG_WIDTH, FLAT_POLE_HEIGHT,
-                               physics_space, scale_positions_to_screen_size,
-                               screen_height)
+                               WebcamInfo, level_data, physics_space,
+                               screen_height, screen_REL_to_screen_POS_xy)
 
 
 def is_touching_flag(flag, balls):
@@ -21,10 +21,11 @@ def is_touching_flag(flag, balls):
       return True
   return False
 
-def add_remove_balls(balls):
-  # Add new balls to the game randomly
-  if random.random() < 0.01:
-      balls.append(add_physics_ball((0.11, 0.05)))
+def add_remove_balls(balls, current_level):
+  if level_data[current_level]["spawn_balls"]:
+    # Add new balls to the game randomly
+    if random.random() < 0.01:
+        balls.append(add_physics_ball((0.11, 0.05)))
 
   balls = remove_dead_balls(balls)
   return balls
@@ -66,7 +67,7 @@ def add_physics_ellipse(pos, width, height, num_segments=50):
 def add_physics_flag(position):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
 
-  screen_position_x, screen_position_y = scale_positions_to_screen_size(position)
+  screen_position_x, screen_position_y = screen_REL_to_screen_POS_xy(position)
 
   # shape = pymunk.Poly(body, [(screen_position_x, screen_position_y), (screen_position_x + FLAG_WIDTH, screen_position_y), (screen_position_x,
   #                     screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT), (screen_position_x + FLAG_WIDTH, screen_position_y - FLAG_WIDTH - FLAT_POLE_HEIGHT)])
@@ -84,7 +85,7 @@ def add_physics_ball(position):
   inertia = pymunk.moment_for_circle(BALL_MASS, 0, BALL_RADIUS, (0, 0))
 
   body = pymunk.Body(BALL_MASS, inertia)
-  body.position = scale_positions_to_screen_size(position)
+  body.position = screen_REL_to_screen_POS_xy(position)
 
   shape = pymunk.Circle(body, BALL_RADIUS)
   shape.elasticity = BALL_ELASTICITY
@@ -98,7 +99,7 @@ def add_physics_ball(position):
 def add_physics_line(start_position, end_position):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
 
-  shape = pymunk.Segment(body, scale_positions_to_screen_size(start_position), scale_positions_to_screen_size(end_position), radius=1)
+  shape = pymunk.Segment(body, screen_REL_to_screen_POS_xy(start_position), screen_REL_to_screen_POS_xy(end_position), radius=1)
 
   shape.elasticity = 0.0
   shape.friction = 0.0

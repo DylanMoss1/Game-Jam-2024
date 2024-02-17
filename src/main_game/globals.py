@@ -31,17 +31,19 @@ FLAT_POLE_HEIGHT = 0.02 * screen_width
 GAME_BODY_TTL_MAX = 1
 WEBCAM_SIZE_SCALAR = 1/4
 
+DEBUG_MODE = False
+
 with open('main_game/levels.json', 'r') as file:
   level_data = json.load(file)
 
 @dataclasses.dataclass
 class WebcamInfo:
-    pose_image_surface: any
-    position: any
-    width: any
-    height: any
-    image: any
+    webcam_surface_rescaled: pygame.Surface
+    target_rect_ABS: pygame.Rect
+    webcam_rect_rescaled_ABS: pygame.Rect
+    webcam_to_target_rescale: float
+    raw_image: any
 
-def scale_positions_to_screen_size(position):
+def screen_REL_to_screen_POS_xy(position):
   position_x, position_y = position
   return position_x * screen_width, position_y * screen_height

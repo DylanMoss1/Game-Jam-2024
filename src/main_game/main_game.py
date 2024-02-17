@@ -32,14 +32,12 @@ def level_generator():
     if n == 0:
       n = 1
 
-def change_level(current_level, balls=None, level_lines=None, flag=None):
-  if balls is not None:
-    for ball in balls:
-      physics_space.remove(*ball)
-  if level_lines is not None:
-    for line in level_lines:
-      physics_space.remove(*line)
-  if flag is not None:
+def load_level(current_level, balls=[], level_lines=[], flag=None):
+  for ball in balls:
+    physics_space.remove(*ball)
+  for line in level_lines:
+    physics_space.remove(*line)
+  if not (flag is None):
     physics_space.remove(*flag)
 
   level_info = level_data[current_level]
@@ -58,13 +56,17 @@ def change_level(current_level, balls=None, level_lines=None, flag=None):
 
     return parsed_grids
 
-  balls = [add_physics_ball(tuple(level_info["ball_pos"]))]
-  level_lines = add_physics_lines_from_position_list(level_info["line_pos"])
-  flag = add_physics_flag(tuple(level_info["flag_pos"]))
+  if "ball_pos" in level_info and len(level_info["ball_pos"]) > 0:
+    balls = [add_physics_ball(tuple(level_info["ball_pos"]))]
+  if "line_pos" in level_info and len(level_info["line_pos"]) > 0:
+    level_lines = add_physics_lines_from_position_list(level_info["line_pos"])
+  if "flag_pos" in level_info and len(level_info["flag_pos"]) > 0:
+    flag = add_physics_flag(tuple(level_info["flag_pos"]))
   bg_images = load_and_scale_background_images(current_level)
-  grids = parse_grids(level_info["grids"])
-  text = level_info["instruction"]
-  allow_head = level_info["allow_head"]
+  
+  grids = parse_grids(level_info.get("grids", []))
+  text = level_info.get("instruction", None)
+  allow_head = level_info.get("allow_head", False)
 
   return balls, level_lines, flag, bg_images, grids, allow_head, text
 
@@ -72,10 +74,10 @@ def initialise_game():
     levels = level_generator()
     current_level = next(levels)
 
-    if current_level == "level_0":
+    if current_level == "level_X":
       balls, level_lines, flag, bg_images, grids, allow_head, text = [], [], None, load_and_scale_background_images("level_0"), [], False, ""
     else:
-      balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, physics_space)
+      balls, level_lines, flag, bg_images, grids, allow_head, text = load_level(current_level)
 
     is_main_game_loop_running = True
 
@@ -108,18 +110,18 @@ def start_game(get_pose_results_callback):
     is_main_game_loop_running = get_events()
 
     ### GET WEBCAM STATE ###
-    webcam_info, render_position_rect, head_width, head_height, head_pos, pose_lines, points_dict = get_webcam_and_pose_info(get_pose_results_callback, current_level)
+    webcam_info, head_width, head_height, head_pos, pose_lines, points_dict = get_webcam_and_pose_info(get_pose_results_callback, current_level)
     
     ### UPDATE GAME STATE ###
-    if current_level != "level_0": balls = add_remove_balls(balls)
+    balls = add_remove_balls(balls, current_level)
     game_limbs, game_heads = update_game_body(game_limbs, game_heads, current_level, pose_lines, grids, allow_head, head_width, head_height, head_pos, level_data)
 
     if is_touching_flag(flag, balls) or (current_level == "level_0" and are_arms_above_head(points_dict)):
       current_level = next(levels)
-      balls, level_lines, flag, bg_images, grids, allow_head, text = change_level(current_level, balls, level_lines, flag)
+      balls, level_lines, flag, bg_images, grids, allow_head, text = load_level(current_level, balls, level_lines, flag)
 
     ### DRAW GAME ###
-    draw_game(bg_images, current_level, balls, flag, webcam_info, render_position_rect, level_lines, game_limbs, game_heads, grids, text, screen_width, screen_height, render_font)
+    draw_game(bg_images, current_level, balls, flag, webcam_info, level_lines, game_limbs, game_heads, grids, text, screen_width, screen_height, render_font)
     pygame.display.flip()
 
     ### CLOCK UPDATES ###
