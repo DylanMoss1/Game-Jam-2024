@@ -49,7 +49,7 @@ def add_physics_lines_from_position_list(positions):
     lines.append(add_physics_line(start_position, end_position))
   return lines
 
-def add_physics_ellipse(space, pos, width, height, num_segments=50):
+def add_physics_ellipse(pos, width, height, num_segments=50):
   body = pymunk.Body(body_type=pymunk.Body.STATIC)
 
   vertices = []
@@ -59,7 +59,7 @@ def add_physics_ellipse(space, pos, width, height, num_segments=50):
     y = pos[1] + height * 0.5 * pymunk.vec2d.Vec2d(0, 1).rotated(angle).y
     vertices.append((x, y))
   shape = pymunk.Poly(body, vertices, radius=1)
-  space.add(body, shape)
+  physics_space.add(body, shape)
   return shape, body
 
 
