@@ -134,13 +134,13 @@ def lvl_to_title(current_level):
 def draw_game(bg_images, current_level, balls, flag, webcam_info: WebcamInfo, render_position_rect, level_lines, game_limbs, game_heads, grids, text, screen_width, screen_height, render_font):
   draw_background(bg_images)
 
+  if not (webcam_info.image is None):
+    draw_webcam(current_level, webcam_info, render_position_rect)
+
   if current_level != "level_0":
     draw_balls(balls)
 
   draw_physics_flag(flag)
-
-  if not (webcam_info.image is None):
-    draw_webcam(current_level, webcam_info, render_position_rect)
 
   for line in level_lines:
     draw_physics_line(line)
