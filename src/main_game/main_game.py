@@ -74,10 +74,7 @@ def initialise_game():
     levels = level_generator()
     current_level = next(levels)
 
-    if current_level == "level_X":
-      balls, level_lines, flag, bg_images, grids, allow_head, text = [], [], None, load_and_scale_background_images("level_0"), [], False, ""
-    else:
-      balls, level_lines, flag, bg_images, grids, allow_head, text = load_level(current_level)
+    balls, level_lines, flag, bg_images, grids, allow_head, text = load_level(current_level)
 
     is_main_game_loop_running = True
 
