@@ -46,7 +46,7 @@ def remove_dead_game_heads(game_heads):
     if ttl <= 0:
       physics_space.remove(*head)
     else:
-      new_game_heads.append((head, ttl - 1))
+      new_game_heads.append((head, new_head_pos, new_head_width, new_head_height, ttl - 1))
 
   return new_game_heads
 
@@ -82,7 +82,6 @@ def add_game_limbs(level_data, current_level, pose_lines, grids, game_limbs: Lis
 
 
 def add_heads(allow_head, head_width, head_height, head_pos, grids, game_heads):
-    game_heads = []
     if allow_head and head_width and head_height and head_pos:
         for grid in grids:
             game_position, webcam_position, _ = grid
