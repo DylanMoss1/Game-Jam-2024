@@ -133,7 +133,7 @@
         15
       ]
     ],
-    "allow_head": true,
+    "allow_head": false,
     "instruction": "left arm"
   },
   "level_2": {
