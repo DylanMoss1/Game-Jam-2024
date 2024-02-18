@@ -2,7 +2,6 @@ import math
 
 import numpy as np
 import pygame
-from scipy.ndimage import zoom
 
 from main_game.globals import (WebcamInfo, level_data, render_screen,
                                screen_height, screen_REL_to_screen_POS_xy,
